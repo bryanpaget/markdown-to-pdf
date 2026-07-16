@@ -16,6 +16,7 @@ variables:
   geometry: "margin=0.75in"
 
 metadata:
+  # This will be inserted into the preamble of the default template.
   header-includes: |
     \usepackage{caption}
     \captionsetup[table]{font=small, labelfont=bf}
