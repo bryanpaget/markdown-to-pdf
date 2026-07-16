@@ -1,0 +1,96 @@
+name: "Markdown to PDF Converter"
+description: "Converts a Markdown file to a PDF document using Pandoc and XeLaTeX."
+author: "gccloudone"
+
+inputs:
+  markdown_file:
+    description: "Path to the Markdown file to be converted (relative to the workspace)."
+    required: true
+  output_file:
+    description: "Path to the output PDF file (relative to the workspace)."
+    required: false
+    default: "output/output.pdf"
+  settings_file:
+    description: "Path to a Pandoc defaults YAML file. Resolved against the workspace first, then the action repo (default 'settings/pdf-settings.yml')."
+    required: false
+    default: "settings/pdf-settings.yml"
+  title:
+    description: "Document title (sets the PDF metadata title)."
+    required: false
+    default: "[Untitled Document]"
+  author:
+    description: "Document author (sets the PDF metadata author)."
+    required: false
+    default: ""
+  date:
+    description: "Document date (sets the PDF metadata date)."
+    required: false
+    default: ""
+  classification:
+    description: "Classification text passed as Pandoc metadata 'classification'."
+    required: false
+    default: "Unclassified | Non classifie"
+  version:
+    description: "Document version passed as Pandoc metadata 'version'."
+    required: false
+    default: ""
+  bibliography:
+    description: "Path to a BibTeX bibliography file (relative to the workspace). Enables citeproc when present."
+    required: false
+    default: "references.bib"
+  extra_pandoc_args:
+    description: "Additional raw arguments appended to the Pandoc command (e.g. '--variable=foo:bar')."
+    required: false
+    default: ""
+  lua_filters:
+    description: "Comma-separated list of Lua filter filenames or paths. Resolved against the action's filters/ dir, then the workspace. Defaults to 'pagebreak.lua,ascii-to-image.lua'."
+    required: false
+    default: "pagebreak.lua,ascii-to-image.lua"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Pandoc
+      shell: bash
+      run: |
+        echo "Installing Pandoc"
+        wget -q https://github.com/jgm/pandoc/releases/download/3.9.0.2/pandoc-3.9.0.2-1-amd64.deb
+        sudo dpkg -i pandoc-3.9.0.2-1-amd64.deb
+        pandoc --version
+
+    - name: Install TeX Live and supporting tools
+      shell: bash
+      run: |
+        echo "Installing TeX Live (XeLaTeX) and supporting packages"
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          texlive-xetex \
+          texlive-fonts-recommended \
+          texlive-latex-recommended \
+          texlive-latex-extra \
+          texlive-fonts-extra \
+          fonts-dejavu-core \
+          fonts-liberation \
+          fonts-noto-color-emoji \
+          fonts-symbola \
+          fonts-texgyre \
+          librsvg2-bin \
+          inkscape \
+          ditaa
+        xelatex --version
+
+    - name: Convert Markdown to PDF
+      shell: bash
+      run: |
+        "${{ github.action_path }}/convert-to-pdf.sh" \
+          "${{ inputs.title }}" \
+          "${{ inputs.markdown_file }}" \
+          "${{ inputs.output_file }}" \
+          "${{ inputs.settings_file }}" \
+          "${{ inputs.bibliography }}" \
+          "${{ inputs.classification }}" \
+          "${{ inputs.author }}" \
+          "${{ inputs.date }}" \
+          "${{ inputs.version }}" \
+          "${{ inputs.extra_pandoc_args }}" \
+          "${{ inputs.lua_filters }}"

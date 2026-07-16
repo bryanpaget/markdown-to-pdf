@@ -1,0 +1,67 @@
+name: Test Markdown to PDF
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test-pdf:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Convert Markdown to PDF
+        uses: ./
+        with:
+          markdown_file: "docs/sample.md"
+          output_file: "output/sample.pdf"
+          title: "Sample Document"
+          author: "CI Bot"
+          date: "2026-07-16"
+          classification: "Unclassified | Non classifie"
+          version: "v1.0.0"
+
+      - name: Convert Markdown to PDF (with citations)
+        uses: ./
+        with:
+          markdown_file: "docs/sample.md"
+          output_file: "output/sample-cited.pdf"
+          title: "Sample Document"
+          author: "CI Bot"
+          date: "2026-07-16"
+          classification: "Unclassified | Non classifie"
+          version: "v1.0.0"
+          bibliography: "references.bib"
+
+      - name: Verify PDFs are valid
+        run: |
+          set -euo pipefail
+          for PDF in output/sample.pdf output/sample-cited.pdf; do
+            if [[ ! -f "$PDF" ]]; then
+              echo "::error::PDF was not generated at $PDF"
+              exit 1
+            fi
+            if ! head -c 4 "$PDF" | grep -q '%PDF'; then
+              echo "::error::$PDF is not a valid PDF (missing %PDF header)"
+              exit 1
+            fi
+            SIZE=$(stat -c%s "$PDF")
+            echo "Generated $PDF size: $SIZE bytes"
+            if [[ "$SIZE" -lt 1000 ]]; then
+              echo "::error::$PDF is suspiciously small ($SIZE bytes); likely corrupted"
+              exit 1
+            fi
+          done
+          echo "✅ PDF validation passed"
+
+      - name: Upload PDFs
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-pdfs
+          path: |
+            output/sample.pdf
+            output/sample-cited.pdf

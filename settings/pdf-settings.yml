@@ -1,0 +1,35 @@
+# Pandoc defaults for Markdown -> PDF (XeLaTeX) conversion.
+#
+# This file is loaded via `pandoc --defaults`. Values here can be overridden by
+# the action's metadata inputs (title, author, date, classification, version)
+# and by `extra_pandoc_args`.
+#
+# Reference: https://pandoc.org/MANUAL.html#defaults-files
+
+# Use the bundled LaTeX template for Word-like margins/fonts.
+# ${REPO_ROOT} is exported by convert-to-pdf.sh (the action repo root) so the
+# path resolves correctly even when this action runs from another repository.
+template: ${REPO_ROOT}/template/latex-template.tex
+
+# Document variables (exposed to the LaTeX template via $variable$).
+# Margins are set directly in the template; the rest are overridable here.
+variables:
+  fontsize: 10pt
+  linestretch: 1.15
+  mainfont: "DejaVu Sans"
+  monofont: "DejaVu Sans Mono"
+  classoption: "letterpaper"
+
+# Metadata left intentionally empty for title/author/date; it is supplied by
+# action inputs. `header-includes` MUST live under `metadata:` in a defaults
+# file (it is not a valid top-level defaults option).
+metadata:
+  # LaTeX customisations are provided by the template. To add your own
+  # preamble code, either edit template/latex-template.tex or pass
+  # `extra_pandoc_args: "-H your-preamble.tex"` to the action.
+  header-includes: ""
+
+# Output format.
+pdf-engine: xelatex
+toc: true
+number-sections: true
