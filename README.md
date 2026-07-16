@@ -3,19 +3,19 @@
 A standalone GitHub composite Action that converts a Markdown file to a PDF using
 [Pandoc](https://pandoc.org/) and [XeLaTeX](https://tug.org/xetex/).
 
-This repository is **PDF-only**. The companion Word converter lives in a separate
+This repository is **PDF‑only**. The companion Word converter lives in a separate
 action (`markdown-to-word`); the two can be chained together in a downstream CI
 workflow if you need both formats from the same source.
 
 ## Features
 
-- Markdown → PDF via Pandoc + XeLaTeX (great font and Unicode/emoji support).
+- Markdown → PDF via Pandoc + XeLaTeX (excellent font, Unicode, and emoji support).
 - Table of contents and numbered sections by default.
 - Optional BibTeX citations (`citeproc`) when a bibliography is provided.
 - Bundled Lua filters: page breaks (`\newpage` / `<!-- pagebreak -->`) and
-  ` ```ascii ` code blocks rendered to images via `ditaa`.
-- Customisable through a Pandoc defaults file (`settings/pdf-settings.yml`) and
-  free-form `extra_pandoc_args`.
+  ` ```ascii ` code blocks rendered as images via `ditaa`.
+- Fully customisable through a Pandoc defaults file (`settings/pdf-settings.yml`)
+  and free‑form `extra_pandoc_args`.
 - `::error` / `::warning` annotations for missing files or failed conversions.
 
 ## Usage
@@ -51,8 +51,7 @@ jobs:
           path: output/sample.pdf
 ```
 
-> The composite action does not perform its own checkout — the calling workflow
-> must check out the repository first.
+> The composite action does **not** perform its own checkout – the calling workflow must check out the repository first.
 
 ## Inputs
 
@@ -64,11 +63,11 @@ jobs:
 | `title`             | no       | `[Untitled Document]`            | Document title (PDF metadata).                                              |
 | `author`            | no       | `""`                             | Document author (PDF metadata).                                             |
 | `date`              | no       | `""`                             | Document date (PDF metadata).                                               |
-| `classification`    | no       | `Unclassified \| Non classifie`  | Free-form classification string (Pandoc metadata `classification`).         |
+| `classification`    | no       | `Unclassified \| Non classifie`  | Free‑form classification string (Pandoc metadata `classification`).         |
 | `version`           | no       | `""`                             | Document version (Pandoc metadata `version`).                               |
-| `bibliography`      | no       | `references.bib`                 | BibTeX file (relative to workspace). Enables `citeproc` when it exists.     |
+| `bibliography`      | no       | `references.bib`                 | BibTeX file (relative to workspace). Enables `citeproc` when present.       |
 | `extra_pandoc_args` | no       | `""`                             | Additional raw Pandoc arguments (e.g. `--variable=foo:bar`).                |
-| `lua_filters`       | no       | `pagebreak.lua,ascii-to-image.lua` | Comma-separated Lua filters. Resolved against `filters/`, then the workspace. |
+| `lua_filters`       | no       | `pagebreak.lua,ascii-to-image.lua` | Comma‑separated Lua filters. Resolved against `filters/`, then the workspace. |
 
 ## Local usage
 
@@ -84,21 +83,65 @@ All arguments can also be supplied via environment variables
 
 ## Customising
 
-- **Settings:** provide your own `settings_file` (a Pandoc defaults file). See
-  `settings/pdf-settings.yml` for the available keys (fonts, margins,
-  `header-includes`, etc.). Core LaTeX packages and citeproc macros live in the
-  template, so `header-includes` is empty by default.
-- **Filters:** drop additional `.lua` files into `filters/` and reference them
-  via `lua_filters`. The `mermaid.lua` filter is bundled but not enabled by
-  default (it requires `mmdc`).
-- **Template:** `template/latex-template.tex` is a Word-like letter template with
-  narrow margins; override via the `template` key in your settings file.
-- **Extra preamble:** to inject your own LaTeX packages, either edit the template
-  or pass `extra_pandoc_args: "-H your-preamble.tex"` (a preamble file in your
-  repo). Passing raw LaTeX via the `header-includes` metadata is not recommended
-  because Pandoc escapes backslashes there.
-- **Citations:** provide a BibTeX file via `bibliography`; the action enables
-  `citeproc` automatically. A sample `references.bib` is included.
+### PDF styling (fonts, margins, line spacing)
+
+The default settings are defined in `settings/pdf-settings.yml`. The bundled
+LaTeX template (`template/latex-template.tex`) reads these variables directly:
+
+| Setting         | Effect                               |
+|-----------------|--------------------------------------|
+| `fontsize`      | Body text size (e.g. `10pt`)         |
+| `mainfont`      | Main font family (e.g. `DejaVu Sans`)|
+| `monofont`      | Monospaced font (e.g. `DejaVu Sans Mono`)|
+| `geometry`      | Page margins (e.g. `margin=0.75in`)  |
+| `linestretch`   | Line spacing multiplier (e.g. `1.15`)|
+| `classoption`   | Extra options for `\documentclass`   |
+| `titlepage`     | Set to `false` to suppress the title page |
+
+To use your own settings, provide a custom `settings_file` in the action inputs.
+The file must follow Pandoc’s [defaults syntax](https://pandoc.org/MANUAL.html#defaults-files).
+
+### Table formatting (shrink wide tables)
+
+The default `settings/pdf-settings.yml` injects the following LaTeX code
+(via `metadata.header-includes`) to make tables more compact and print‑friendly:
+
+```yaml
+metadata:
+  header-includes: |
+    \usepackage{caption}
+    \captionsetup[table]{font=small, labelfont=bf}
+    \AtBeginEnvironment{tabular}{\small}
+    \AtBeginEnvironment{longtable}{\small}
+    \setlength{\tabcolsep}{4pt}
+    \renewcommand{\arraystretch}{1.1}
+```
+
+You can adjust these values in your own settings file or replace them entirely.
+
+### Lua filters
+
+- `pagebreak.lua` – converts `\newpage` or `<!-- pagebreak -->` into page breaks.
+- `ascii-to-image.lua` – renders ` ```ascii ` code blocks as PNG images via `ditaa`.
+- `mermaid.lua` – bundled but **not enabled** by default (requires `mmdc`).
+  To use it, set `lua_filters: "pagebreak.lua,ascii-to-image.lua,mermaid.lua"` and ensure
+  `mmdc` is installed (the action does not install it by default).
+
+### Custom LaTeX preamble
+
+If the bundled template does not suit your needs, you have two options:
+
+1. **Edit the template** – modify `template/latex-template.tex` directly.
+2. **Inject LaTeX code** – use `extra_pandoc_args: "-H your-preamble.tex"`,
+   where `your-preamble.tex` is a file in your repository containing raw LaTeX.
+   This is more portable than relying on `header-includes` in the defaults file,
+   because pandoc may escape backslashes in YAML strings (though using `|` blocks works).
+
+### Template override
+
+The action always uses `template/latex-template.tex` (bundled). To use a different
+template, you can pass `extra_pandoc_args: "--template=path/to/your-template.tex"`.
+Make sure the template file exists in the workspace.
 
 ## Requirements (for local runs)
 
@@ -114,7 +157,11 @@ action.yml                 # Composite GitHub Action (PDF)
 convert-to-pdf.sh          # Conversion script (also runnable locally)
 settings/pdf-settings.yml  # Default Pandoc defaults
 filters/                   # Bundled Lua filters
-template/latex-template.tex# LaTeX template
+template/latex-template.tex# LaTeX template (uses variables from settings)
 docs/sample.md             # Sample input
 .github/workflows/test.yml # Self-test workflow
 ```
+
+## License
+
+GPL or similar
