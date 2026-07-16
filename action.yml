@@ -74,6 +74,7 @@ runs:
           fonts-noto-color-emoji \
           fonts-symbola \
           fonts-texgyre \
+          lmodern \
           librsvg2-bin \
           inkscape \
           ditaa

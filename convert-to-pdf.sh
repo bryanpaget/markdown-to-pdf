@@ -183,12 +183,18 @@ PANDOC_CMD+=(--toc --number-sections)
 # LaTeX template (bundled in the action repo).
 # Resolve absolute path to the template and add --template.
 # ==========================================================
+#
+echo "::debug::Checking for $LATEX_TEMPLATE_PATH"
+ls -la "$REPO_ROOT/template/" || echo "::debug::template/ directory missing"
 LATEX_TEMPLATE_PATH="$REPO_ROOT/$DEFAULT_LATEX_TEMPLATE"
 if [[ -f "$LATEX_TEMPLATE_PATH" ]]; then
     PANDOC_CMD+=(--template="$LATEX_TEMPLATE_PATH")
 else
     echo "::warning::LaTeX template '$LATEX_TEMPLATE_PATH' not found; using pandoc default."
 fi
+
+echo "::debug::Checking for $LATEX_TEMPLATE_PATH"
+ls -la "$REPO_ROOT/template/" || echo "::debug::template/ directory missing"
 
 # PDF engine.
 PANDOC_CMD+=(--pdf-engine=xelatex --pdf-engine-opt=--shell-escape)
