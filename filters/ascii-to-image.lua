@@ -1,7 +1,5 @@
 -- ascii-to-image.lua
--- Converts ```ascii code blocks to images using ditaa.
--- Embeds the image via pandoc.mediabag and returns a pandoc.Para
--- so it's placed after \begin{document}.
+-- Converts ```ascii blocks to PNG via ditaa, centered with a border.
 
 local function run_ditaa(content)
   local tmp = os.tmpname() .. ".txt"
@@ -14,13 +12,12 @@ local function run_ditaa(content)
   os.execute(cmd)
   os.remove(tmp)
 
-  local img_file = io.open(outfile, "r")
-  if not img_file then
-    io.stderr:write("ditaa failed to generate image\n")
-    return nil
+  local img = io.open(outfile, "r")
+  if img then
+    img:close()
+    return outfile
   end
-  img_file:close()
-  return outfile
+  return nil
 end
 
 function CodeBlock(el)
@@ -29,7 +26,6 @@ function CodeBlock(el)
     if img_path then
       local f = io.open(img_path, "rb")
       if not f then
-        io.stderr:write("Could not read generated image\n")
         return el
       end
       local data = f:read("*all")
@@ -39,7 +35,16 @@ function CodeBlock(el)
       local name = "ascii-" .. os.time() .. ".png"
       pandoc.mediabag.insert(name, "image/png", data)
       local img = pandoc.Image({}, pandoc.mediabag.name_to_path(name))
-      return pandoc.Para({img})   -- ensures it's a block element in the body
+
+      -- Wrap in a centered, bordered box
+      local latex = string.format([[
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{%s}}
+\end{center}
+]], pandoc.mediabag.name_to_path(name))
+
+      -- Return a RawBlock for LaTeX (safe inside body)
+      return pandoc.RawBlock('latex', latex)
     else
       return el
     end
