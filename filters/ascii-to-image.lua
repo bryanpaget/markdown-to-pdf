@@ -46,10 +46,10 @@ function CodeBlock(el)
     io.stderr:write("Converting ascii block...\n")
     local img_path = run_ditaa(el.text)
     if img_path then
-      -- Display at 70% of text width, preserving sharpness.
+      -- Display at 90% of text width, preserving sharpness.
       local latex = string.format([[
 \begin{center}
-\fbox{\includegraphics[width=0.7\textwidth]{%s}}
+\fbox{\includegraphics[width=0.9\textwidth]{%s}}
 \end{center}
 ]], img_path)
       return pandoc.RawBlock('latex', latex)
