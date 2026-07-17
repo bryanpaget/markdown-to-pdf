@@ -1,75 +1,104 @@
 ---
-title: "Sample Document with ASCII Diagram"
+title: "Sample Document with Ditaa Diagrams"
 author: "CI Bot"
 date: "2026-07-17"
 ---
 
 # Introduction
 
-This document tests the Markdown-to-PDF pipeline, including:
-
-- Complex ASCII diagrams
-- Tables with many columns
-- Code blocks
-- Citations (via `references.bib`)
+This document tests the Markdown-to-PDF pipeline with proper ditaa-compatible ASCII diagrams.
 
 ---
 
-## SecOps SIEM Integration
+## Simple Flow
 
-Below is the complete architecture diagram for the SIEM integration flow.
+A basic client-server-database architecture.
 
 ```ascii
-3.1 SecOps SIEM Integration
-AKS Control Plane
-  ├── kube-apiserver
-  ├── kube-audit-admin
-  └── guard
-        │
-        ▼
-AKS Diagnostic Settings
-        │
-        ▼
-Log Analytics Workspace ───────────────┐
-                                       │
-Defender for Containers                │
-(managed security alerts) ─────────────┤
-                                       │
-Tetragon Platform Component            │
-(selected runtime telemetry)           │
-        │                              │
-        └──► Log Analytics Workspace ──┤
-                                       ▼
-                              Microsoft Sentinel
-                                       │
-                                       ├── Analytic Rules
-                                       ├── Security Alerts
-                                       ├── Incidents
-                                       └── Automation
-                                              │
-                                              ▼
-                                   copilot-global-triage
-                                              │
-                                              ▼
-                                    Platform Rule Review
-                                     Logic App Playbook
++--------+     +----------+     +--------+
+| Client | --> |  Server  | --> |   DB   |
++--------+     +----------+     +--------+
 ```
 
-This diagram shows the end‑to‑end flow from AKS control plane logs to Sentinel alerting and automated triage.
+---
+
+## SIEM Integration Flow
+
+Below is the complete architecture diagram for the SIEM integration flow, using only ASCII characters.
+
+```ascii
++------------------+     +---------------------+     +-------------------+
+| AKS Control      |     | AKS Diagnostic      |     | Log Analytics     |
+| Plane            | --> | Settings            | --> | Workspace         |
+| - kube-apiserver |     +---------------------+     +--------+----------+
+| - kube-audit     |                                              |
+| - guard          |                                              |
++------------------+                                              |
+                                                                  |
++---------------------+                                           |
+| Defender for        |                                           |
+| Containers          |                                           |
+| (managed alerts)    |-------------------------------------------+
++---------------------+                                           |
+                                                                  |
++---------------------+                                           |
+| Tetragon            |                                           |
+| (runtime telemetry) |-------------------------------------------+
++---------------------+                                           |
+                                                                  v
+                                                        +-------------------+
+                                                        | Microsoft         |
+                                                        | Sentinel          |
+                                                        +--------+----------+
+                                                                 |
+                                           +---------------------+---------------------+
+                                           |                     |                     |
+                                           v                     v                     v
+                                 +-----------------+ +-----------------+ +-----------------+
+                                 | Analytic Rules  | | Security Alerts | | Incidents       |
+                                 +-----------------+ +-----------------+ +-----------------+
+                                                                 |
+                                                                 v
+                                                      +-----------------------+
+                                                      | copilot-global-triage |
+                                                      +-----------+-----------+
+                                                                  |
+                                                                  v
+                                                      +-----------------------+
+                                                      | Platform Rule Review  |
+                                                      | Logic App Playbook    |
+                                                      +-----------------------+
+```
+
+This diagram shows the end-to-end flow from AKS control plane logs to Sentinel alerting and automated triage, using only ASCII characters.
+
+---
+
+## Multi-cloud Portability
+
+A simple diagram showing portability across clouds.
+
+```ascii
++----------------+     +----------------+     +----------------+
+|   Azure        |     |    GCP         |     |    AWS         |
+|   Aurora       | --> |    Aurora      | --> |    Aurora      |
+|   (Pre-Release)|     |    (MVP)       |     |    (MVP)       |
++----------------+     +----------------+     +----------------+
+```
 
 ---
 
 ## Data Flow Details
 
-| Step | Component | Action |
-|------|-----------|--------|
-| 1    | AKS Control Plane | Emits audit logs and guard events |
-| 2    | Diagnostic Settings | Streams logs to Log Analytics Workspace |
-| 3    | Defender for Containers | Generates security alerts |
-| 4    | Tetragon | Captures runtime telemetry |
-| 5    | Log Analytics | Aggregates all data |
-| 6    | Microsoft Sentinel | Runs analytics and creates incidents |
-| 7    | Automation | Triggers playbooks for response |
+| Step | Component               | Action                                  |
+| ---- | ----------------------- | --------------------------------------- |
+| 1    | AKS Control Plane       | Emits audit logs and guard events       |
+| 2    | Diagnostic Settings     | Streams logs to Log Analytics Workspace |
+| 3    | Defender for Containers | Generates security alerts               |
+| 4    | Tetragon                | Captures runtime telemetry              |
+| 5    | Log Analytics           | Aggregates all data                     |
+| 6    | Microsoft Sentinel      | Runs analytics and creates incidents    |
+| 7    | Automation              | Triggers playbooks for response         |
 
 ---
 
@@ -95,8 +124,8 @@ This architecture is based on best practices from cloud-native SIEM [@cloudsiem2
 
 The integrated SIEM pipeline provides:
 
-- Real‑time threat detection
+- Real-time threat detection
 - Automated incident response
 - Centralised logging across all clusters
 
-With this setup, the platform achieves a PBMM‑ready security posture.
+With this setup, the platform achieves a PBMM-ready security posture.
