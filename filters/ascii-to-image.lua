@@ -1,51 +1,60 @@
 -- ascii-to-image.lua
--- Converts ```ascii blocks to PNG via ditaa, centered with a border.
+-- Converts ```ascii blocks to high-resolution PNG using ditaa.
+-- Options:
+--   --scale 2.0          : bigger resolution for sharp text.
+--   --no-antialias       : crisp pixel edges.
+--   --round-corners      : rounded corners on boxes.
+--   --no-shadows         : remove drop shadows.
+--   --transparent        : transparent background (optional).
 
 local function run_ditaa(content)
   local tmp = os.tmpname() .. ".txt"
   local f = io.open(tmp, "w")
+  if not f then
+    io.stderr:write("Failed to create temp text file\n")
+    return nil
+  end
   f:write(content)
   f:close()
 
-  local outfile = os.tmpname() .. ".png"
-  local cmd = string.format("ditaa --no-antialias --png %s %s", tmp, outfile)
-  os.execute(cmd)
+  local outfile = "ascii-diagram-" .. os.time() .. ".png"
+  -- Combine options for a cleaner diagram.
+  local cmd = string.format(
+    "ditaa --scale 2.0 --no-antialias --round-corners --no-shadows --transparent %s %s",
+    tmp, outfile
+  )
+  local ret = os.execute(cmd)
   os.remove(tmp)
+
+  if not ret then
+    io.stderr:write("ditaa failed\n")
+    return nil
+  end
 
   local img = io.open(outfile, "r")
   if img then
     img:close()
     return outfile
+  else
+    io.stderr:write("ditaa did not produce output file\n")
+    return nil
   end
-  return nil
 end
 
 function CodeBlock(el)
   if el.classes:includes("ascii") then
+    io.stderr:write("Converting ascii block...\n")
     local img_path = run_ditaa(el.text)
     if img_path then
-      local f = io.open(img_path, "rb")
-      if not f then
-        return el
-      end
-      local data = f:read("*all")
-      f:close()
-      os.remove(img_path)
-
-      local name = "ascii-" .. os.time() .. ".png"
-      pandoc.mediabag.insert(name, "image/png", data)
-      local img = pandoc.Image({}, pandoc.mediabag.name_to_path(name))
-
-      -- Wrap in a centered, bordered box
+      -- Display at 70% of text width, preserving sharpness.
       local latex = string.format([[
 \begin{center}
-\fbox{\includegraphics[width=0.8\textwidth]{%s}}
+\fbox{\includegraphics[width=0.7\textwidth]{%s}}
 \end{center}
-]], pandoc.mediabag.name_to_path(name))
-
-      -- Return a RawBlock for LaTeX (safe inside body)
+]], img_path)
       return pandoc.RawBlock('latex', latex)
     else
+      io.stderr:write("Fallback: keeping original code block\n")
       return el
     end
   end
