@@ -32,6 +32,37 @@ runs:
           exit 1
         fi
 
+    - name: Install Microsoft fonts and Calibri substitute
+      shell: bash
+      run: |
+        # Microsoft TrueType core fonts (Arial/Times/Verdana/...).
+        if ! fc-list 2>/dev/null | grep -qi 'Arial'; then
+          sudo apt-get update
+          echo "msttcorefonts/accepted-mscorefonts-eula boolean true" | sudo debconf-set-selections
+          sudo apt-get install -y ttf-mscorefonts-installer
+          sudo fc-cache -f >/dev/null 2>&1 || true
+        fi
+        # Carlito is the metric-compatible substitute for Calibri (not in free MS core-fonts).
+        if ! fc-list 2>/dev/null | grep -qi 'Carlito'; then
+          sudo apt-get install -y fonts-crosextra-carlito
+        fi
+        sudo tee /etc/fonts/conf.d/99-calibri-carlito.conf >/dev/null <<'XML'
+        <?xml version="1.0"?>
+        <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+        <fontconfig>
+          <match target="pattern">
+            <test name="family"><string>Calibri</string></test>
+            <edit name="family" mode="assign" binding="strong"><string>Carlito</string></edit>
+          </match>
+        </fontconfig>
+        XML
+        sudo fc-cache -f >/dev/null 2>&1 || true
+
+    - name: Fix DOCX table widths and styles
+      shell: bash
+      run: |
+        python3 "${{ github.action_path }}/fix-docx-tables.py" "${{ inputs.docx_file }}"
+
     - name: Convert Word document to PDF
       id: convert
       shell: bash
