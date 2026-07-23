@@ -1,84 +1,97 @@
-name: "Markdown to PDF Converter"
-description: "Converts a Markdown file to a PDF using Pandoc and XeLaTeX."
-author: "gccloudone"
+name: "LibreOffice Word to PDF"
+description: >-
+  Convert a .docx (or .doc) file to a PDF using LibreOffice in headless mode.
+  The PDF preserves the Word document's layout, fonts, and template styling,
+  which is not possible with a separate Pandoc/LaTeX render.
+
+branding:
+  icon: "file-text"
+  color: "blue"
 
 inputs:
-  markdown_file:
-    description: "Path to the Markdown file to be converted."
+  docx_file:
+    description: "Path to the source Word document (.docx or .doc) to convert."
     required: true
-  output_file:
-    description: "Path to the output PDF file."
-    required: false
-    default: "output/output.pdf"
-  default_title:
-    description: "Default title for the PDF document."
+  pdf_file:
+    description: "Path where the resulting PDF should be written."
     required: true
-  number_sections:
-    description: "Add section numbers to headings (--number-sections)"
-    required: false
-    default: "false"
-  classification:
-    description: "Classification text for the document (e.g., 'Unclassified | Non classifie')."
-    required: false
-    default: "Unclassified | Non classifie"
-  settings_file:
-    description: "Path to a Pandoc defaults YAML file."
-    required: false
-    default: "settings/pdf-settings.yml"
-  bibliography:
-    description: "Path to a BibTeX bibliography file. Enables citeproc when present."
-    required: false
-    default: ""
-  lua_filters:
-    description: "Comma-separated list of Lua filter filenames."
-    required: false
-    default: "pagebreak.lua"
-  extra_pandoc_args:
-    description: "Additional raw arguments appended to the Pandoc command."
-    required: false
-    default: ""
+
+outputs:
+  pdf_file:
+    description: "Resolved path to the generated PDF (same as inputs.pdf_file)."
+    value: ${{ steps.convert.outputs.pdf_file }}
 
 runs:
   using: "composite"
   steps:
-    - name: Install Pandoc
+    - name: Verify LibreOffice is available
       shell: bash
       run: |
-        echo "Installing Pandoc"
-        wget -q https://github.com/jgm/pandoc/releases/download/3.10/pandoc-3.10-1-amd64.deb
-        sudo dpkg -i pandoc-3.10-1-amd64.deb
-        pandoc --version
+        if ! command -v soffice >/dev/null 2>&1 && ! command -v libreoffice >/dev/null 2>&1; then
+          echo "::error::LibreOffice (soffice) is not installed. Install it with: sudo apt-get install -y libreoffice-writer"
+          exit 1
+        fi
 
-    - name: Install TeX Live and supporting tools
+    - name: Convert Word document to PDF
+      id: convert
       shell: bash
       run: |
-        echo "Installing TeX Live (XeLaTeX) and supporting packages"
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends \
-          texlive-xetex \
-          texlive-fonts-recommended \
-          texlive-latex-recommended \
-          texlive-latex-extra \
-          texlive-fonts-extra \
-          fonts-dejavu-core \
-          fonts-liberation \
-          fonts-noto-color-emoji \
-          fonts-symbola \
-          fonts-texgyre \
-          lmodern
-        xelatex --version
+        set -euo pipefail
 
-    - name: Convert Markdown to PDF
-      shell: bash
-      env:
-        INPUT_NUMBER_SECTIONS: ${{ inputs.number_sections }}
-      run: |
-        "${{ github.action_path }}/convert-to-pdf.sh" \
-          "${{ inputs.default_title }}" \
-          "${{ inputs.markdown_file }}" \
-          "${{ inputs.output_file }}" \
-          "${{ inputs.settings_file }}" \
-          "${{ inputs.bibliography }}" \
-          "${{ inputs.classification }}" \
-          "${{ inputs.extra_pandoc_args }}" \
-          "${{ inputs.lua_filters }}"
+        SRC="${{ inputs.docx_file }}"
+        DEST="${{ inputs.pdf_file }}"
+
+        if [ ! -f "$SRC" ]; then
+          echo "::error::Source document not found: $SRC"
+          exit 1
+        fi
+
+        # Ensure the destination directory exists.
+        mkdir -p "$(dirname "$DEST")"
+        DEST="$(cd "$(dirname "$DEST")" && pwd)/$(basename "$DEST")"
+
+        OUTDIR="$(cd "$(dirname "$DEST")" && pwd)"
+        BASE="$(basename "$DEST" .pdf)"
+
+        # LibreOffice writes "<basename>.pdf" into OUTDIR. We give it the
+        # desired base name by temporarily copying the source if needed.
+        SRC_NAME="$(basename "$SRC")"
+        SRC_BASE="${SRC_NAME%.*}"
+        SRC_EXT="${SRC_NAME##*.}"
+
+        WORK=""
+        if [ "$SRC_BASE" != "$BASE" ]; then
+          WORK="$(mktemp -d)"
+          cp "$SRC" "$WORK/$BASE.$SRC_EXT"
+          SRC_TO_CONVERT="$WORK/$BASE.$SRC_EXT"
+        else
+          SRC_TO_CONVERT="$SRC"
+        fi
+
+        # Run headless conversion. A clean per-run profile avoids lock
+        # contention when multiple conversions run on the same runner.
+        PROFILE="$(mktemp -d)"
+        soffice --headless \
+          --nofirststartwizard \
+          --norestore \
+          --invisible \
+          -env:UserInstallation="file://$PROFILE" \
+          --convert-to pdf \
+          --outdir "$OUTDIR" \
+          "$SRC_TO_CONVERT"
+        rm -rf "$PROFILE" "$WORK" 2>/dev/null || true
+
+        GENERATED="$OUTDIR/$BASE.pdf"
+        if [ ! -f "$GENERATED" ]; then
+          echo "::error::LibreOffice did not produce $GENERATED"
+          exit 1
+        fi
+
+        # If the generated file landed at a different path than requested
+        # (e.g. source basename differed), move it into place.
+        if [ "$GENERATED" != "$DEST" ]; then
+          mv -f "$GENERATED" "$DEST"
+        fi
+
+        echo "pdf_file=$DEST" >> "$GITHUB_OUTPUT"
+        echo "Converted $SRC -> $DEST"

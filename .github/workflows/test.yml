@@ -1,4 +1,4 @@
-name: Test Markdown to PDF
+name: Test LibreOffice PDF Conversion
 
 on:
   push:
@@ -14,54 +14,59 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Convert Markdown to PDF
+      - name: Install LibreOffice
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libreoffice-writer
+
+      - name: Create sample DOCX
+        run: |
+          mkdir -p output
+          cat > /tmp/sample.md <<'EOF'
+          # Test Document
+
+          This is a test document for PDF conversion.
+
+          ## Section 1
+
+          - Item 1
+          - Item 2
+          - Item 3
+
+          | Column A | Column B |
+          |----------|----------|
+          | Cell 1   | Cell 2   |
+          EOF
+          pandoc /tmp/sample.md -o output/sample.docx --reference-doc=template.docx 2>/dev/null || \
+          pandoc /tmp/sample.md -o output/sample.docx
+
+      - name: Convert to PDF
         uses: ./
         with:
-          markdown_file: "docs/sample.md"
-          output_file: "output/sample.pdf"
-          title: "Sample Document"
-          author: "CI Bot"
-          date: "2026-07-16"
-          classification: "Unclassified | Non classifie"
-          version: "v1.0.0"
+          docx_file: "output/sample.docx"
+          pdf_file: "output/sample.pdf"
 
-      - name: Convert Markdown to PDF (with citations)
-        uses: ./
-        with:
-          markdown_file: "docs/sample.md"
-          output_file: "output/sample-cited.pdf"
-          title: "Sample Document"
-          author: "CI Bot"
-          date: "2026-07-16"
-          classification: "Unclassified | Non classifie"
-          version: "v1.0.0"
-          bibliography: "references.bib"
-
-      - name: Verify PDFs are valid
+      - name: Verify PDF is valid
         run: |
           set -euo pipefail
-          for PDF in output/sample.pdf output/sample-cited.pdf; do
-            if [[ ! -f "$PDF" ]]; then
-              echo "::error::PDF was not generated at $PDF"
-              exit 1
-            fi
-            if ! head -c 4 "$PDF" | grep -q '%PDF'; then
-              echo "::error::$PDF is not a valid PDF (missing %PDF header)"
-              exit 1
-            fi
-            SIZE=$(stat -c%s "$PDF")
-            echo "Generated $PDF size: $SIZE bytes"
-            if [[ "$SIZE" -lt 1000 ]]; then
-              echo "::error::$PDF is suspiciously small ($SIZE bytes); likely corrupted"
-              exit 1
-            fi
-          done
-          echo "✅ PDF validation passed"
+          if [[ ! -f output/sample.pdf ]]; then
+            echo "::error::PDF was not generated"
+            exit 1
+          fi
+          if ! head -c 4 output/sample.pdf | grep -q '%PDF'; then
+            echo "::error::Not a valid PDF"
+            exit 1
+          fi
+          SIZE=$(stat -c%s output/sample.pdf)
+          echo "Generated PDF size: $SIZE bytes"
+          if [[ "$SIZE" -lt 1000 ]]; then
+            echo "::error::PDF is suspiciously small ($SIZE bytes)"
+            exit 1
+          fi
+          echo "PDF validation passed"
 
-      - name: Upload PDFs
+      - name: Upload PDF
         uses: actions/upload-artifact@v4
         with:
-          name: sample-pdfs
-          path: |
-            output/sample.pdf
-            output/sample-cited.pdf
+          name: sample-pdf
+          path: output/sample.pdf

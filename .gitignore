@@ -1,9 +1,2 @@
 output/*
 !output/.gitkeep
-
-# LaTeX / Pandoc intermediate files
-*.aux
-*.log
-*.out
-*.toc
-*.tex
