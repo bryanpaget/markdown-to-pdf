@@ -1,51 +1,42 @@
 name: "Markdown to PDF Converter"
-description: "Converts a Markdown file to a PDF document using Pandoc and XeLaTeX."
+description: "Converts a Markdown file to a PDF using Pandoc and XeLaTeX."
 author: "gccloudone"
 
 inputs:
   markdown_file:
-    description: "Path to the Markdown file to be converted (relative to the workspace)."
+    description: "Path to the Markdown file to be converted."
     required: true
   output_file:
-    description: "Path to the output PDF file (relative to the workspace)."
+    description: "Path to the output PDF file."
     required: false
     default: "output/output.pdf"
-  settings_file:
-    description: "Path to a Pandoc defaults YAML file. Resolved against the workspace first, then the action repo (default 'settings/pdf-settings.yml')."
+  default_title:
+    description: "Default title for the PDF document."
+    required: true
+  number_sections:
+    description: "Add section numbers to headings (--number-sections)"
     required: false
-    default: "settings/pdf-settings.yml"
-  title:
-    description: "Document title (sets the PDF metadata title)."
-    required: false
-    default: "[Untitled Document]"
-  author:
-    description: "Document author (sets the PDF metadata author)."
-    required: false
-    default: ""
-  date:
-    description: "Document date (sets the PDF metadata date)."
-    required: false
-    default: ""
+    default: "false"
   classification:
-    description: "Classification text passed as Pandoc metadata 'classification'."
+    description: "Classification text for the document (e.g., 'Unclassified | Non classifie')."
     required: false
     default: "Unclassified | Non classifie"
-  version:
-    description: "Document version passed as Pandoc metadata 'version'."
+  settings_file:
+    description: "Path to a Pandoc defaults YAML file."
     required: false
-    default: ""
+    default: "settings/pdf-settings.yml"
   bibliography:
-    description: "Path to a BibTeX bibliography file (relative to the workspace). Enables citeproc when present."
-    required: false
-    default: "references.bib"
-  extra_pandoc_args:
-    description: "Additional raw arguments appended to the Pandoc command (e.g. '--variable=foo:bar')."
+    description: "Path to a BibTeX bibliography file. Enables citeproc when present."
     required: false
     default: ""
   lua_filters:
-    description: "Comma-separated list of Lua filter filenames or paths. Resolved against the action's filters/ dir, then the workspace. Defaults to 'pagebreak.lua,ascii-to-image.lua'."
+    description: "Comma-separated list of Lua filter filenames."
     required: false
-    default: "pagebreak.lua,ascii-to-image.lua"
+    default: "pagebreak.lua"
+  extra_pandoc_args:
+    description: "Additional raw arguments appended to the Pandoc command."
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -74,24 +65,20 @@ runs:
           fonts-noto-color-emoji \
           fonts-symbola \
           fonts-texgyre \
-          lmodern \
-          librsvg2-bin \
-          inkscape \
-          ditaa
+          lmodern
         xelatex --version
 
     - name: Convert Markdown to PDF
       shell: bash
+      env:
+        INPUT_NUMBER_SECTIONS: ${{ inputs.number_sections }}
       run: |
         "${{ github.action_path }}/convert-to-pdf.sh" \
-          "${{ inputs.title }}" \
+          "${{ inputs.default_title }}" \
           "${{ inputs.markdown_file }}" \
           "${{ inputs.output_file }}" \
           "${{ inputs.settings_file }}" \
           "${{ inputs.bibliography }}" \
           "${{ inputs.classification }}" \
-          "${{ inputs.author }}" \
-          "${{ inputs.date }}" \
-          "${{ inputs.version }}" \
           "${{ inputs.extra_pandoc_args }}" \
           "${{ inputs.lua_filters }}"

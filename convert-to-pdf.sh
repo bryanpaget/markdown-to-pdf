@@ -6,7 +6,6 @@ DEFAULT_TITLE="[Untitled Document]"
 DEFAULT_MD_FILE="docs/sample.md"
 DEFAULT_OUTPUT_FILE="output/sample.pdf"
 DEFAULT_SETTINGS_FILE="settings/pdf-settings.yml"
-DEFAULT_BIBLIOGRAPHY="references.bib"
 DEFAULT_CLASSIFICATION="Unclassified | Non classifie"
 
 # === RESOLVE DIRECTORIES ===
@@ -15,20 +14,21 @@ REPO_ROOT="$SCRIPT_DIR"
 WORKSPACE_ROOT="${GITHUB_WORKSPACE:-$PWD}"
 
 # === ARGUMENT PARSING ===
+# Matches positional order in action.yml.
 TITLE="${1:-${TITLE:-$DEFAULT_TITLE}}"
 MARKDOWN_FILE="${2:-${MARKDOWN_FILE:-$DEFAULT_MD_FILE}}"
 OUTPUT_FILE="${3:-${OUTPUT_FILE:-$DEFAULT_OUTPUT_FILE}}"
 SETTINGS_FILE="${4:-${SETTINGS_FILE:-$DEFAULT_SETTINGS_FILE}}"
-BIBLIOGRAPHY="${5:-${BIBLIOGRAPHY:-$DEFAULT_BIBLIOGRAPHY}}"
+BIBLIOGRAPHY="${5:-${BIBLIOGRAPHY:-}}"
 CLASSIFICATION="${6:-${CLASSIFICATION:-$DEFAULT_CLASSIFICATION}}"
-AUTHOR="${7:-${AUTHOR:-}}"
-DATE="${8:-${DATE:-}}"
-VERSION="${9:-${VERSION:-}}"
-EXTRA_PANDOC_ARGS="${10:-${EXTRA_PANDOC_ARGS:-}}"
-LUA_FILTERS_INPUT="${11:-${LUA_FILTERS:-}}"
+EXTRA_PANDOC_ARGS="${7:-${EXTRA_PANDOC_ARGS:-}}"
+LUA_FILTERS_INPUT="${8:-${LUA_FILTERS:-}}"
+
+# Section numbering controlled by INPUT_NUMBER_SECTIONS env var.
+INPUT_NUMBER_SECTIONS="${INPUT_NUMBER_SECTIONS:-false}"
 
 usage() {
-    echo "Usage: $0 [title] [markdown_file] [output_file] [settings_file] [bibliography] [classification] [author] [date] [version] [extra_pandoc_args] [lua_filters]"
+    echo "Usage: $0 [title] [markdown_file] [output_file] [settings_file] [bibliography] [classification] [extra_pandoc_args] [lua_filters]"
     exit 1
 }
 [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]] && usage
@@ -64,12 +64,9 @@ fi
 
 # Metadata.
 PANDOC_CMD+=(--metadata=title:"$TITLE")
-[[ -n "$AUTHOR" ]] && PANDOC_CMD+=(--metadata=author:"$AUTHOR")
-[[ -n "$DATE" ]] && PANDOC_CMD+=(--metadata=date:"$DATE")
 [[ -n "$CLASSIFICATION" ]] && PANDOC_CMD+=(--metadata=classification:"$CLASSIFICATION")
-[[ -n "$VERSION" ]] && PANDOC_CMD+=(--metadata=version:"$VERSION")
 
-# Lua filters – default to only pagebreak.lua (removed ascii-to-image to avoid issues).
+# Lua filters – default to only pagebreak.lua.
 if [[ -z "$LUA_FILTERS_INPUT" ]]; then
     LUA_FILTERS_INPUT="pagebreak.lua"
 fi
@@ -86,8 +83,13 @@ done
 # Citations.
 [[ -n "$BIBLIOGRAPHY" && -f "$BIBLIOGRAPHY" ]] && PANDOC_CMD+=(--citeproc --bibliography="$BIBLIOGRAPHY")
 
-# TOC, sections.
-PANDOC_CMD+=(--toc --number-sections)
+# TOC.
+PANDOC_CMD+=(--toc)
+
+# Section numbering – only when INPUT_NUMBER_SECTIONS is true.
+if [[ "$INPUT_NUMBER_SECTIONS" == "true" || "$INPUT_NUMBER_SECTIONS" == "1" || "$INPUT_NUMBER_SECTIONS" == "yes" ]]; then
+    PANDOC_CMD+=(--number-sections)
+fi
 
 # PDF engine.
 PANDOC_CMD+=(--pdf-engine=xelatex --pdf-engine-opt=--shell-escape)
@@ -104,10 +106,10 @@ PANDOC_CMD+=(-o "$OUTPUT_FILE")
 echo "::group::Pandoc command"
 echo "${PANDOC_CMD[*]}"
 echo "::endgroup::"
-echo "🔄 Converting '$MARKDOWN_FILE' -> '$OUTPUT_FILE' (PDF via XeLaTeX)..."
+echo "Converting '$MARKDOWN_FILE' -> '$OUTPUT_FILE' (PDF via XeLaTeX)..."
 if "${PANDOC_CMD[@]}"; then
     if [[ -f "$OUTPUT_FILE" ]]; then
-        echo "✅ PDF generated: $OUTPUT_FILE"
+        echo "PDF generated: $OUTPUT_FILE"
         exit 0
     else
         echo "::error::Pandoc exited successfully but no output file."
