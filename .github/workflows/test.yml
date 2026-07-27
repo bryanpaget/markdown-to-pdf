@@ -8,7 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-pdf:
+  test-docx:
+    name: Test DOCX to PDF
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -68,5 +69,62 @@ jobs:
       - name: Upload PDF
         uses: actions/upload-artifact@v4
         with:
-          name: sample-pdf
+          name: sample-pdf-docx
+          path: output/sample.pdf
+
+  test-markdown:
+    name: Test Markdown to PDF
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Create sample Markdown
+        run: |
+          mkdir -p output
+          cat > output/sample.md <<'EOF'
+          # Test Document
+
+          This is a test document for Markdown-to-PDF conversion.
+
+          ## Section 1
+
+          - Item 1
+          - Item 2
+          - Item 3
+
+          | Column A | Column B |
+          |----------|----------|
+          | Cell 1   | Cell 2   |
+          EOF
+
+      - name: Convert Markdown to PDF
+        uses: ./
+        with:
+          markdown_file: "output/sample.md"
+          pdf_file: "output/sample.pdf"
+
+      - name: Verify PDF is valid
+        run: |
+          set -euo pipefail
+          if [[ ! -f output/sample.pdf ]]; then
+            echo "::error::PDF was not generated"
+            exit 1
+          fi
+          if ! head -c 4 output/sample.pdf | grep -q '%PDF'; then
+            echo "::error::Not a valid PDF"
+            exit 1
+          fi
+          SIZE=$(stat -c%s output/sample.pdf)
+          echo "Generated PDF size: $SIZE bytes"
+          if [[ "$SIZE" -lt 1000 ]]; then
+            echo "::error::PDF is suspiciously small ($SIZE bytes)"
+            exit 1
+          fi
+          echo "PDF validation passed"
+
+      - name: Upload PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-pdf-markdown
           path: output/sample.pdf

@@ -1,8 +1,9 @@
-name: "LibreOffice Word to PDF"
+name: "Markdown/Word to PDF"
 description: >-
-  Convert a .docx (or .doc) file to a PDF using LibreOffice in headless mode.
-  The PDF preserves the Word document's layout, fonts, and template styling,
-  which is not possible with a separate Pandoc/LaTeX render.
+  Convert a Markdown or Word (.docx/.doc) file to a PDF.
+  Markdown files are first converted to .docx via Pandoc, then the Word
+  document is converted to PDF using LibreOffice in headless mode.
+  The PDF preserves the document's layout, fonts, and template styling.
 
 branding:
   icon: "file-text"
@@ -10,8 +11,17 @@ branding:
 
 inputs:
   docx_file:
-    description: "Path to the source Word document (.docx or .doc) to convert."
-    required: true
+    description: >-
+      Path to the source Word document (.docx or .doc) to convert.
+      Provide either docx_file or markdown_file (not both).
+    required: false
+    default: ""
+  markdown_file:
+    description: >-
+      Path to a Markdown file to convert. It will be converted to .docx via
+      Pandoc first, then to PDF. Provide either docx_file or markdown_file.
+    required: false
+    default: ""
   pdf_file:
     description: "Path where the resulting PDF should be written."
     required: true
@@ -24,6 +34,65 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Resolve source document
+      id: resolve
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        DOCX="${{ inputs.docx_file }}"
+        MD="${{ inputs.markdown_file }}"
+
+        if [ -n "$MD" ] && [ -n "$DOCX" ]; then
+          echo "::error::Provide either 'markdown_file' or 'docx_file', not both."
+          exit 1
+        fi
+        if [ -z "$MD" ] && [ -z "$DOCX" ]; then
+          echo "::error::You must provide either 'markdown_file' or 'docx_file'."
+          exit 1
+        fi
+
+        if [ -n "$MD" ]; then
+          if [ ! -f "$MD" ]; then
+            echo "::error::Markdown file not found: $MD"
+            exit 1
+          fi
+          echo "source_type=markdown" >> "$GITHUB_OUTPUT"
+          echo "md_file=$MD" >> "$GITHUB_OUTPUT"
+
+          # Derive a .docx path next to the markdown file.
+          DOCX_DIR="$(dirname "$MD")"
+          DOCX_BASE="$(basename "$MD" .md)"
+          RESOLVED_DOCX="$DOCX_DIR/$DOCX_BASE.docx"
+          echo "docx_file=$RESOLVED_DOCX" >> "$GITHUB_OUTPUT"
+        else
+          if [ ! -f "$DOCX" ]; then
+            echo "::error::Word document not found: $DOCX"
+            exit 1
+          fi
+          echo "source_type=docx" >> "$GITHUB_OUTPUT"
+          echo "docx_file=$DOCX" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Install Pandoc
+      if: steps.resolve.outputs.source_type == 'markdown'
+      shell: bash
+      run: |
+        if ! command -v pandoc >/dev/null 2>&1; then
+          wget -q https://github.com/jgm/pandoc/releases/download/3.9.0.2/pandoc-3.9.0.2-1-amd64.deb
+          sudo dpkg -i pandoc-3.9.0.2-1-amd64.deb
+        fi
+        pandoc --version
+
+    - name: Convert Markdown to Word
+      if: steps.resolve.outputs.source_type == 'markdown'
+      shell: bash
+      run: |
+        set -euo pipefail
+        pandoc "${{ steps.resolve.outputs.md_file }}" \
+          -o "${{ steps.resolve.outputs.docx_file }}"
+        echo "Converted ${{ steps.resolve.outputs.md_file }} -> ${{ steps.resolve.outputs.docx_file }}"
+
     - name: Install LibreOffice
       shell: bash
       run: |
@@ -61,7 +130,7 @@ runs:
     - name: Fix DOCX table widths and styles
       shell: bash
       run: |
-        python3 "${{ github.action_path }}/fix-docx-tables.py" "${{ inputs.docx_file }}"
+        python3 "${{ github.action_path }}/fix-docx-tables.py" "${{ steps.resolve.outputs.docx_file }}"
 
     - name: Convert Word document to PDF
       id: convert
@@ -69,7 +138,7 @@ runs:
       run: |
         set -euo pipefail
 
-        SRC="${{ inputs.docx_file }}"
+        SRC="${{ steps.resolve.outputs.docx_file }}"
         DEST="${{ inputs.pdf_file }}"
 
         if [ ! -f "$SRC" ]; then
