@@ -67,7 +67,7 @@ To generate them locally:
 
 ```bash
 pandoc samples/complex-document.md --resource-path=samples -o complex-document.docx
-python3 fix-docx-tables.py complex-document.docx
+python3 lib/fix-docx.py complex-document.docx
 soffice --headless --convert-to pdf complex-document.docx
 ```
 

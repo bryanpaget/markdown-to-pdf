@@ -32,7 +32,7 @@ jobs:
 
       - name: Fix DOCX table widths and styles
         run: |
-          python3 fix-docx-tables.py samples/complex-document.docx
+          python3 lib/fix-docx.py samples/complex-document.docx
 
       - name: Build PDF from DOCX
         uses: ./
@@ -115,6 +115,6 @@ jobs:
             Generate these locally with:
             \`\`\`
             pandoc samples/complex-document.md --resource-path=samples -o document.docx
-            python3 fix-docx-tables.py document.docx
+            python3 lib/fix-docx.py document.docx
             soffice --headless --convert-to pdf document.docx
             \`\`\`"

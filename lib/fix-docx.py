@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Post-process a .docx produced by pandoc + SSC template before LibreOffice converts it.
+"""Post-process a .docx produced from Markdown (via Pandoc) before LibreOffice
+converts it to PDF.  Can be used standalone or as a library.
 
 Seven fixes are applied:
 
@@ -34,10 +35,10 @@ Seven fixes are applied:
    gets a page break before it, so sections begin on a new page.
 
 Usage:
-    python3 fix-docx-tables.py <file.docx> [...]                    (default)
-    python3 fix-docx-tables.py true    <file.docx> [...]            (code style)
-    python3 fix-docx-tables.py <file.docx> true                     (flag at end)
-    python3 fix-docx-tables.py <file.docx> true sections            (both opts)
+    python3 lib/fix-docx.py <file.docx> [...]                    (default)
+    python3 lib/fix-docx.py true    <file.docx> [...]            (code style)
+    python3 lib/fix-docx.py <file.docx> true                     (flag at end)
+    python3 lib/fix-docx.py <file.docx> true sections            (both opts)
 """
 import sys
 import zipfile
@@ -432,7 +433,7 @@ def fix_doc(path: str, code_style: bool = False, page_breaks: str = "none") -> d
 def main() -> None:
     if len(sys.argv) < 2:
         print(
-            "usage: fix-docx-tables.py [code_style] [page_breaks] <file.docx> [...]",
+            "usage: fix-docx.py [code_style] [page_breaks] <file.docx> [...]",
             file=sys.stderr,
         )
         sys.exit(1)

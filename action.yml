@@ -142,7 +142,7 @@ runs:
     - name: Fix DOCX table widths and styles
       shell: bash
       run: |
-        python3 "${{ github.action_path }}/fix-docx-tables.py" \
+        python3 "${{ github.action_path }}/lib/fix-docx.py" \
           "${{ steps.resolve.outputs.docx_file }}" \
           "${{ inputs.code_block_style }}" \
           "${{ inputs.page_breaks }}"
