@@ -1,0 +1,81 @@
+name: Build Sample Artifacts
+
+on:
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  build:
+    name: Build sample artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Pandoc
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq pandoc
+
+      - name: Build DOCX from markdown
+        run: |
+          pandoc samples/complex-document.md \
+            --resource-path=samples \
+            -o samples/complex-document.docx
+
+      - name: Fix DOCX table widths and styles
+        run: |
+          python3 fix-docx-tables.py samples/complex-document.docx
+
+      - name: Build PDF from DOCX
+        uses: ./
+        with:
+          docx_file: samples/complex-document.docx
+          pdf_file: samples/complex-document-from-docx.pdf
+
+      - name: Build PDF from markdown
+        uses: ./
+        with:
+          markdown_file: samples/complex-document.md
+          pdf_file: samples/complex-document-from-markdown.pdf
+
+      - name: Stage release assets
+        run: |
+          mkdir -p release-assets
+          cp samples/complex-document.md       release-assets/complex-document-source.md
+          cp samples/complex-document.docx     release-assets/complex-document.docx
+          cp samples/complex-document-from-docx.pdf      release-assets/complex-document-from-docx.pdf
+          cp samples/complex-document-from-markdown.pdf  release-assets/complex-document-from-markdown.pdf
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-artifacts
+          path: release-assets/*
+          compression-level: 0
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --body \
+            "**Sample artifacts** built from this PR — download from the
+             [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          for f in release-assets/*; do
+            gh release upload "$TAG" "$f" --clobber
+          done
