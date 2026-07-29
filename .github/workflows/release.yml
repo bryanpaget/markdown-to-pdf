@@ -3,8 +3,8 @@ name: Build Sample Artifacts
 on:
   pull_request:
     branches: [main]
-  release:
-    types: [published]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -70,12 +70,47 @@ jobs:
             "**Sample artifacts** built from this PR — download from the
              [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
 
-      - name: Attach to release
-        if: github.event_name == 'release'
+  release:
+    name: Publish release page
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download built artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: sample-artifacts
+          path: release-assets
+
+      - name: Create release tag
+        run: |
+          TAG="v$(date +'%Y%m%d-%H%M%S')"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "created at $(date)" >> /tmp/release-body.md
+        id: tag
+
+      - name: Create and upload release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="${{ github.event.release.tag_name }}"
-          for f in release-assets/*; do
-            gh release upload "$TAG" "$f" --clobber
-          done
+          TAG="${{ steps.tag.outputs.tag }}"
+          gh release create "$TAG" \
+            release-assets/* \
+            --title "v$(date +'%Y%m%d') — Sample Document Build" \
+            --notes "Pre-built sample artifacts demonstrating the markdown-to-PDF conversion pipeline.
+
+            | File | Description |
+            |------|-------------|
+            | \`complex-document-source.md\` | Original markdown source with tables, code blocks, and embedded financial charts |
+            | \`complex-document.docx\` | Intermediate DOCX produced by Pandoc |
+            | \`complex-document-from-docx.pdf\` | PDF rendered via DOCX → LibreOffice |
+            | \`complex-document-from-markdown.pdf\` | PDF rendered via Markdown → Pandoc → LibreOffice |
+
+            Generate these locally with:
+            \`\`\`
+            pandoc samples/complex-document.md --resource-path=samples -o document.docx
+            python3 fix-docx-tables.py document.docx
+            soffice --headless --convert-to pdf document.docx
+            \`\`\`"
