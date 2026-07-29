@@ -34,14 +34,14 @@ Eight fixes are applied:
 7. SECTION PAGE BREAKS — (opt-in, page_breaks="sections") Each Heading1 paragraph
    gets a page break before it, so sections begin on a new page.
 
-8. FOOTNOTE STYLE — (opt-in, footnote_style="small") The Footnote Text paragraph
-   style is reduced to 8pt for a more polished academic look.
+8. FONT SWITCH — (opt-in, font="arial") All paragraph styles are switched from
+   the default Calibri/Carlito to Arial.
 
 Usage:
     python3 lib/fix-docx.py <file.docx> [...]                         (default)
     python3 lib/fix-docx.py true    <file.docx> [...]                 (code style)
     python3 lib/fix-docx.py <file.docx> true                          (flag at end)
-    python3 lib/fix-docx.py <file.docx> true sections small           (all opts)
+    python3 lib/fix-docx.py <file.docx> true sections small arial     (all opts)
 """
 import sys
 import zipfile
@@ -405,9 +405,32 @@ def fix_footnote_style(styles_root: ET.Element) -> bool:
     return False
 
 
-def fix_doc(path: str, code_style: bool = False, page_breaks: str = "none", footnote_style: str = "default") -> dict:
+# ---------------------------------------------------------------------------
+# Fix 9: font switch (opt-in)
+# ---------------------------------------------------------------------------
+
+def fix_font_arial(styles_root: ET.Element) -> int:
+    """Switch all paragraph styles to Arial."""
+    fixed = 0
+    for st in styles_root.iter(W + "style"):
+        if st.get(W + "styleId") in ("SourceCode",):
+            continue
+        rPr = st.find(W + "rPr")
+        if rPr is None:
+            continue
+        rFonts = rPr.find(W + "rFonts")
+        if rFonts is None:
+            rFonts = ET.SubElement(rPr, W + "rFonts")
+        rFonts.set(W + "ascii", "Arial")
+        rFonts.set(W + "hAnsi", "Arial")
+        rFonts.set(W + "cs", "Arial")
+        fixed += 1
+    return fixed
+
+
+def fix_doc(path: str, code_style: bool = False, page_breaks: str = "none", footnote_style: str = "default", font: str = "default") -> dict:
     tmp = path + ".tmp"
-    counts = {"tables": 0, "classif_boxes": 0, "styles": False, "injected": [], "code_style": False, "page_breaks": 0, "footnote_style": False}
+    counts = {"tables": 0, "classif_boxes": 0, "styles": False, "injected": [], "code_style": False, "page_breaks": 0, "footnote_style": False, "font": 0}
 
     with zipfile.ZipFile(path) as zin:
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:

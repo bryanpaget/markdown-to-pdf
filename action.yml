@@ -37,10 +37,10 @@ inputs:
       Defaults to 'none' for backwards compatibility.
     required: false
     default: "none"
-  footnote_style:
+  font:
     description: >-
-      When 'small', footnote text is rendered in 8pt font for a more polished
-      appearance. Defaults to 'default'.
+      When 'arial', the document font is switched from the default (Calibri /
+      Carlito) to Arial. Defaults to 'default'.
     required: false
     default: "default"
 
@@ -152,7 +152,7 @@ runs:
           "${{ steps.resolve.outputs.docx_file }}" \
           "${{ inputs.code_block_style }}" \
           "${{ inputs.page_breaks }}" \
-          "${{ inputs.footnote_style }}"
+          "${{ inputs.font }}"
 
     - name: Convert Word document to PDF
       id: convert
