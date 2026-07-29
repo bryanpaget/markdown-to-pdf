@@ -4,7 +4,6 @@ This document demonstrates the full range of formatting features supported by th
 
 With the `page_breaks: sections` feature enabled, each major section (H1 heading) begins on a new page, making this document suitable for printed reports and formal publications.
 
----
 
 # Tables & Data
 
@@ -78,7 +77,6 @@ With the `page_breaks: sections` feature enabled, each major section (H1 heading
 | Data Export          | CSV          | CSV, JSON, XML | CSV, JSON, XML, API |
 | Price                | Free         | $29/user/mo    | Custom          |
 
----
 
 # Text & Lists
 
@@ -164,7 +162,6 @@ This sentence has a footnote.[^1] And this one has another.[^2]
 
 Above the rule.
 
----
 
 Below the rule.
 
@@ -178,7 +175,6 @@ Em dashes --- and en dashes -- with proper spacing.
 
 Copyright © 2024, registered ®, trademark ™.
 
----
 
 # Code Blocks
 
@@ -221,7 +217,6 @@ async function convertMarkdownToPDF(markdownPath, pdfPath) {
   <!-- same value but now interpreted as percentage -->
 ```
 
----
 
 # Financial Charts
 
@@ -257,7 +252,6 @@ A visual inspection reveals moderate volatility with a slight upward drift, cons
 
 ![Candlestick chart showing daily price action](images/candlestick.png)
 
----
 
 ## Exhibit B: Moving Average Crossovers
 
@@ -283,7 +277,6 @@ The SMA-50 remains above the SMA-200 for most of the observation window, indicat
 
 ![Moving average crossover chart](images/moving-averages.png)
 
----
 
 ## Exhibit C: Portfolio Sector Allocation
 
@@ -306,7 +299,6 @@ The portfolio is concentrated in growth-oriented sectors (technology at 32 %), w
 
 ![Portfolio allocation donut chart](images/portfolio-allocation.png)
 
----
 
 ## Exhibit D: Quarterly Earnings Analysis
 
@@ -328,7 +320,6 @@ Revenue grew from $1,240 M in Q1 2024 to $1,580 M in Q2 2025, a compound quarter
 
 ![Quarterly earnings bar chart](images/quarterly-earnings.png)
 
----
 
 ## Exhibit E: Monte Carlo Simulation
 
@@ -351,7 +342,6 @@ Under these assumptions, the median portfolio value after one year of trading is
 
 ![Monte Carlo simulation paths](images/monte-carlo.png)
 
----
 
 ## Exhibit F: Sharpe Ratio Heatmap
 
@@ -374,7 +364,6 @@ At the lowest risk-free rate (2 %) and volatility (10 %), the Sharpe ratio reach
 
 ![Sharpe ratio heatmap](images/sharpe-heatmap.png)
 
----
 
 # Conclusion
 
