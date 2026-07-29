@@ -59,7 +59,7 @@ jobs:
       - name: Build screenshot demo
         run: |
           pandoc samples/screenshot-demo.md --resource-path=samples -o samples/screenshot-demo.docx
-          python3 lib/fix-docx.py samples/screenshot-demo.docx
+          python3 lib/fix-docx.py true samples/screenshot-demo.docx sections default
           soffice --headless --convert-to pdf --outdir samples/ samples/screenshot-demo.docx
 
       - name: Generate comparison screenshot
