@@ -2,7 +2,11 @@
 
 A GitHub Action that converts Markdown to publication-ready PDFs using Pandoc and LibreOffice.
 
-$$ \mu = \frac{1}{N}\sum_{i=1}^{N}x_i \qquad \sigma = \sqrt{\frac{1}{N}\sum_{i=1}^{N}(x_i - \mu)^2} $$
+```
+npm install   # install dependencies
+npm run build # compile the project
+npm test      # run the test suite
+```
 
 Quarterly Revenue
 

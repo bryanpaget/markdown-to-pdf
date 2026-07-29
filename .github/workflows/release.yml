@@ -54,8 +54,7 @@ jobs:
 
       - name: Install screenshot tools
         run: |
-          sudo apt-get install -y -qq poppler-utils
-          pip3 install Pillow pygments --break-system-packages -q
+          pip3 install Pillow pygments pymupdf --break-system-packages -q
 
       - name: Build screenshot demo
         run: |
