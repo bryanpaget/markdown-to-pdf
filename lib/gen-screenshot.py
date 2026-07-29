@@ -1,10 +1,16 @@
 import io
+import os
 import subprocess
 import sys
 from PIL import Image, ImageDraw, ImageFont
 from pygments import highlight
 from pygments.lexers import MarkdownLexer
 from pygments.formatters import ImageFormatter
+
+pdf_path = "samples/complex-document-from-docx.pdf"
+if not os.path.exists(pdf_path):
+    print(f"ERROR: {pdf_path} not found", file=sys.stderr)
+    sys.exit(1)
 
 md = open("samples/complex-document.md").read()
 md_section = "\n".join(md.split("\n")[:79])
@@ -14,10 +20,21 @@ fmt = ImageFormatter(style="github-dark", line_numbers=True,
     line_number_pad=4, line_number_bg="#161b22")
 code_img = Image.open(io.BytesIO(highlight(md_section, MarkdownLexer(), fmt)))
 
-subprocess.run(
+result = subprocess.run(
     ["pdftoppm", "-png", "-f", "2", "-l", "2", "-r", "130",
-     "samples/complex-document-from-docx.pdf", "/tmp/pdfpage"], check=True)
-pdf_img = Image.open("/tmp/pdfpage-2.png")
+     pdf_path, "/tmp/pdfpage"], capture_output=True, text=True)
+if result.returncode != 0:
+    print(f"pdftoppm failed: {result.stderr}", file=sys.stderr)
+    sys.exit(1)
+
+tmp_files = [f for f in os.listdir("/tmp") if f.startswith("pdfpage")]
+if not tmp_files:
+    print("ERROR: pdftoppm created no output files", file=sys.stderr)
+    sys.exit(1)
+
+pdf_img_path = os.path.join("/tmp", tmp_files[0])
+print(f"Using pdftoppm output: {pdf_img_path}")
+pdf_img = Image.open(pdf_img_path)
 
 target_h = min(code_img.height, 1200)
 code_w = int(code_img.width * target_h / code_img.height)
