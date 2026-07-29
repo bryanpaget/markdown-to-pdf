@@ -38,12 +38,14 @@ not possible with a separate Pandoc/LaTeX render.
 
 ## Inputs
 
-| Input             | Required | Description                                             |
-|-------------------|----------|---------------------------------------------------------|
-| `docx_file`       | no       | Path to the source Word document (.docx/.doc).          |
-| `markdown_file`   | no       | Path to a Markdown file (auto-converted to .docx first).|
-| `pdf_file`        | yes      | Path where the resulting PDF should be written.         |
+| Input             | Required | Description                                                        |
+|-------------------|----------|--------------------------------------------------------------------|
+| `docx_file`       | no       | Path to the source Word document (.docx/.doc).                     |
+| `markdown_file`   | no       | Path to a Markdown file (auto-converted to .docx first).           |
+| `pdf_file`        | yes      | Path where the resulting PDF should be written.                    |
 | `code_block_style`| no       | When `"true"`, code blocks render with a light background and smaller font. Default `"false"`. |
+| `page_breaks`     | no       | When `"sections"`, each H1 heading starts on a new page. Default `"none"`. |
+| `font`            | no       | When `"arial"`, switches the document font to Arial. Default `"default"`.  |
 
 Provide either `docx_file` or `markdown_file` (not both).
 
@@ -66,7 +68,7 @@ To generate them locally:
 
 ```bash
 pandoc samples/complex-document.md --resource-path=samples -o complex-document.docx
-python3 fix-docx-tables.py complex-document.docx
+python3 lib/fix-docx.py complex-document.docx
 soffice --headless --convert-to pdf complex-document.docx
 ```
 

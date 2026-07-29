@@ -32,7 +32,7 @@ jobs:
 
       - name: Fix DOCX table widths and styles
         run: |
-          python3 fix-docx-tables.py samples/complex-document.docx
+          python3 lib/fix-docx.py samples/complex-document.docx
 
       - name: Build PDF from DOCX
         uses: ./
@@ -40,6 +40,8 @@ jobs:
           docx_file: samples/complex-document.docx
           pdf_file: samples/complex-document-from-docx.pdf
           code_block_style: "true"
+          page_breaks: "sections"
+          font: "arial"
 
       - name: Build PDF from markdown
         uses: ./
@@ -47,6 +49,8 @@ jobs:
           markdown_file: samples/complex-document.md
           pdf_file: samples/complex-document-from-markdown.pdf
           code_block_style: "true"
+          page_breaks: "sections"
+          font: "arial"
 
       - name: Stage release assets
         run: |
@@ -113,6 +117,6 @@ jobs:
             Generate these locally with:
             \`\`\`
             pandoc samples/complex-document.md --resource-path=samples -o document.docx
-            python3 fix-docx-tables.py document.docx
+            python3 lib/fix-docx.py document.docx
             soffice --headless --convert-to pdf document.docx
             \`\`\`"

@@ -31,6 +31,18 @@ inputs:
       font. Defaults to 'false' for backwards compatibility.
     required: false
     default: "false"
+  page_breaks:
+    description: >-
+      When 'sections', each top-level heading (H1) starts on a new page.
+      Defaults to 'none' for backwards compatibility.
+    required: false
+    default: "none"
+  font:
+    description: >-
+      When 'arial', the document font is switched from the default (Calibri /
+      Carlito) to Arial. Defaults to 'default'.
+    required: false
+    default: "default"
 
 outputs:
   pdf_file:
@@ -136,9 +148,11 @@ runs:
     - name: Fix DOCX table widths and styles
       shell: bash
       run: |
-        python3 "${{ github.action_path }}/fix-docx-tables.py" \
+        python3 "${{ github.action_path }}/lib/fix-docx.py" \
           "${{ steps.resolve.outputs.docx_file }}" \
-          "${{ inputs.code_block_style }}"
+          "${{ inputs.code_block_style }}" \
+          "${{ inputs.page_breaks }}" \
+          "${{ inputs.font }}"
 
     - name: Convert Word document to PDF
       id: convert
