@@ -90,6 +90,7 @@ runs:
       run: |
         set -euo pipefail
         pandoc "${{ steps.resolve.outputs.md_file }}" \
+          --resource-path="$(dirname "${{ steps.resolve.outputs.md_file }}")" \
           -o "${{ steps.resolve.outputs.docx_file }}"
         echo "Converted ${{ steps.resolve.outputs.md_file }} -> ${{ steps.resolve.outputs.docx_file }}"
 

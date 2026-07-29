@@ -1,0 +1,116 @@
+name: Build Sample Artifacts
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  build:
+    name: Build sample artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Pandoc
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq pandoc
+
+      - name: Build DOCX from markdown
+        run: |
+          pandoc samples/complex-document.md \
+            --resource-path=samples \
+            -o samples/complex-document.docx
+
+      - name: Fix DOCX table widths and styles
+        run: |
+          python3 fix-docx-tables.py samples/complex-document.docx
+
+      - name: Build PDF from DOCX
+        uses: ./
+        with:
+          docx_file: samples/complex-document.docx
+          pdf_file: samples/complex-document-from-docx.pdf
+
+      - name: Build PDF from markdown
+        uses: ./
+        with:
+          markdown_file: samples/complex-document.md
+          pdf_file: samples/complex-document-from-markdown.pdf
+
+      - name: Stage release assets
+        run: |
+          mkdir -p release-assets
+          cp samples/complex-document.md       release-assets/complex-document-source.md
+          cp samples/complex-document.docx     release-assets/complex-document.docx
+          cp samples/complex-document-from-docx.pdf      release-assets/complex-document-from-docx.pdf
+          cp samples/complex-document-from-markdown.pdf  release-assets/complex-document-from-markdown.pdf
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-artifacts
+          path: release-assets/*
+          compression-level: 0
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --body \
+            "**Sample artifacts** built from this PR — download from the
+             [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+
+  release:
+    name: Publish release page
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download built artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: sample-artifacts
+          path: release-assets
+
+      - name: Create release tag
+        run: |
+          TAG="v$(date +'%Y%m%d-%H%M%S')"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "created at $(date)" >> /tmp/release-body.md
+        id: tag
+
+      - name: Create and upload release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          gh release create "$TAG" \
+            release-assets/* \
+            --title "v$(date +'%Y%m%d') — Sample Document Build" \
+            --notes "Pre-built sample artifacts demonstrating the markdown-to-PDF conversion pipeline.
+
+            | File | Description |
+            |------|-------------|
+            | \`complex-document-source.md\` | Original markdown source with tables, code blocks, and embedded financial charts |
+            | \`complex-document.docx\` | Intermediate DOCX produced by Pandoc |
+            | \`complex-document-from-docx.pdf\` | PDF rendered via DOCX → LibreOffice |
+            | \`complex-document-from-markdown.pdf\` | PDF rendered via Markdown → Pandoc → LibreOffice |
+
+            Generate these locally with:
+            \`\`\`
+            pandoc samples/complex-document.md --resource-path=samples -o document.docx
+            python3 fix-docx-tables.py document.docx
+            soffice --headless --convert-to pdf document.docx
+            \`\`\`"
