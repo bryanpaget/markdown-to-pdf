@@ -384,29 +384,9 @@ def fix_section_page_breaks(doc_root: ET.Element) -> int:
     return fixed
 
 
-# ---------------------------------------------------------------------------
-# Fix 8: footnote style (opt-in)
-# ---------------------------------------------------------------------------
-FOOTNOTE_SMALL_SZ = "16"     # half-points → 8pt
-
-def fix_footnote_style(styles_root: ET.Element) -> bool:
-    """Set Footnote Text paragraph style to a smaller font size."""
-    for st in styles_root.iter(W + "style"):
-        if st.get(W + "styleId") == "FootnoteText":
-            rPr = st.find(W + "rPr")
-            if rPr is None:
-                rPr = ET.SubElement(st, W + "rPr")
-            for tag in ("sz", "szCs"):
-                el = rPr.find(W + tag)
-                if el is None:
-                    el = ET.SubElement(rPr, tag)
-                el.set(W + "val", FOOTNOTE_SMALL_SZ)
-            return True
-    return False
-
 
 # ---------------------------------------------------------------------------
-# Fix 9: font switch (opt-in)
+# Fix 8: font switch (opt-in)
 # ---------------------------------------------------------------------------
 
 def fix_font_arial(styles_root: ET.Element) -> int:
@@ -428,9 +408,9 @@ def fix_font_arial(styles_root: ET.Element) -> int:
     return fixed
 
 
-def fix_doc(path: str, code_style: bool = False, page_breaks: str = "none", footnote_style: str = "default", font: str = "default") -> dict:
+def fix_doc(path: str, code_style: bool = False, page_breaks: str = "none", font: str = "default") -> dict:
     tmp = path + ".tmp"
-    counts = {"tables": 0, "classif_boxes": 0, "styles": False, "injected": [], "code_style": False, "page_breaks": 0, "footnote_style": False, "font": 0}
+    counts = {"tables": 0, "classif_boxes": 0, "styles": False, "injected": [], "code_style": False, "page_breaks": 0, "font": 0}
 
     with zipfile.ZipFile(path) as zin:
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
@@ -443,8 +423,8 @@ def fix_doc(path: str, code_style: bool = False, page_breaks: str = "none", foot
                     counts["injected"] = fix_missing_styles(root)
                     if code_style:
                         counts["code_style"] = fix_code_block_style(root)
-                    if footnote_style == "small":
-                        counts["footnote_style"] = fix_footnote_style(root)
+                    if font == "arial":
+                        counts["font"] = fix_font_arial(root)
                     counts["styles"] = True
                     data = ET.tostring(root, xml_declaration=True, encoding="UTF-8")
 
@@ -482,17 +462,17 @@ def fix_doc(path: str, code_style: bool = False, page_breaks: str = "none", foot
 def main() -> None:
     if len(sys.argv) < 2:
         print(
-            "usage: fix-docx.py [code_style] [page_breaks] [footnote_style] "
+            "usage: fix-docx.py [code_style] [page_breaks] [font] "
             "<file.docx> [...]",
             file=sys.stderr,
         )
         sys.exit(1)
     args = list(sys.argv[1:])
 
-    # Pop footnote_style from the end if present.
-    footnote_style = "default"
-    if args and args[-1] in ("default", "small"):
-        footnote_style = args.pop()
+    # Pop font from the end if present.
+    font = "default"
+    if args and args[-1] in ("default", "arial"):
+        font = args.pop()
 
     # Pop page_breaks from the end if present.
     page_breaks = "none"
@@ -511,15 +491,15 @@ def main() -> None:
         sys.exit(1)
     for path in args:
         c = fix_doc(path, code_style=code_style, page_breaks=page_breaks,
-                    footnote_style=footnote_style)
+                    font=font)
         injected_str = (f", injected styles: {c['injected']}") if c["injected"] else ""
         code_str = ", code blocks styled" if c["code_style"] else ""
         pb_str = f", {c['page_breaks']} section page breaks" if c["page_breaks"] else ""
-        fn_str = ", footnotes styled" if c["footnote_style"] else ""
+        font_str = f", font changed" if c["font"] else ""
         print(
             f"{path}: {c['tables']} table(s), "
             f"{c['classif_boxes']} classification box(es) widened"
-            f"{injected_str}{code_str}{pb_str}{fn_str}"
+            f"{injected_str}{code_str}{pb_str}{font_str}"
         )
 
 

@@ -26,7 +26,7 @@ jobs:
           cat > /tmp/sample.md <<'EOF'
           # Test Document
 
-          This is a test document for PDF conversion.[^1]
+          This is a test document for PDF conversion.
 
           ## Section 1
 
@@ -37,8 +37,6 @@ jobs:
           | Column A | Column B |
           |----------|----------|
           | Cell 1   | Cell 2   |
-
-          [^1]: A test footnote to verify styling.
           EOF
           pandoc /tmp/sample.md -o output/sample.docx
 
@@ -48,7 +46,7 @@ jobs:
           docx_file: "output/sample.docx"
           pdf_file: "output/sample.pdf"
           page_breaks: "sections"
-          footnote_style: "small"
+          font: "arial"
 
       - name: Verify PDF is valid
         run: |
@@ -88,7 +86,7 @@ jobs:
           cat > output/sample.md <<'EOF'
           # Test Document
 
-          This is a test document for Markdown-to-PDF conversion.[^1]
+          This is a test document for Markdown-to-PDF conversion.
 
           ## Section 1
 
@@ -99,8 +97,6 @@ jobs:
           | Column A | Column B |
           |----------|----------|
           | Cell 1   | Cell 2   |
-
-          [^1]: A test footnote to verify styling.
           EOF
 
       - name: Convert Markdown to PDF
@@ -109,7 +105,7 @@ jobs:
           markdown_file: "output/sample.md"
           pdf_file: "output/sample.pdf"
           page_breaks: "sections"
-          footnote_style: "small"
+          font: "arial"
 
       - name: Verify PDF is valid
         run: |

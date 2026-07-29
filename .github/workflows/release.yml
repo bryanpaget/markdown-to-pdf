@@ -41,7 +41,7 @@ jobs:
           pdf_file: samples/complex-document-from-docx.pdf
           code_block_style: "true"
           page_breaks: "sections"
-          footnote_style: "small"
+          font: "arial"
 
       - name: Build PDF from markdown
         uses: ./
@@ -50,7 +50,7 @@ jobs:
           pdf_file: samples/complex-document-from-markdown.pdf
           code_block_style: "true"
           page_breaks: "sections"
-          footnote_style: "small"
+          font: "arial"
 
       - name: Stage release assets
         run: |
