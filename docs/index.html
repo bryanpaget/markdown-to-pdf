@@ -350,6 +350,21 @@
         <h3>Zero-config setup</h3>
         <p>Everything is auto-installed — no setup required. Just point it at your file and run.</p>
       </div>
+      <div class="feature">
+        <div class="feature-icon" style="background:#a371f722;color:#a371f7;">P</div>
+        <h3>Section page breaks</h3>
+        <p>Opt into <code>page_breaks: sections</code> and each H1 heading starts a new page — perfect for reports.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" style="background:#3fb95022;color:#3fb950;">A</div>
+        <h3>Arial or default font</h3>
+        <p>Switch between the default Calibri/Carlito and Arial via <code>font: arial</code>. Code blocks render in Inconsolata.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" style="background:#d2992222;color:#d29922;">{ }</div>
+        <h3>Code block styling</h3>
+        <p>Enable <code>code_block_style: true</code> for a light background and smaller font on code blocks.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -362,7 +377,7 @@
       <a href="https://github.com/bryanpaget/markdown-to-pdf/releases">releases page</a>,
       generated from the
       <a href="https://github.com/bryanpaget/markdown-to-pdf/blob/main/samples/complex-document.md">sample document</a>
-      — a real-world example with tables, code blocks, charts, and extensive formatting.
+      — a real-world example with tables, code blocks, charts, and extensive formatting. Each major section starts on a new page for a book-style layout.
     </p>
 
     <table class="sample-table">
@@ -436,6 +451,16 @@
     docx_file: "output/document.docx"
     pdf_file:  "output/document.pdf"</pre>
 
+    <div style="margin-top:20px;" class="code-header">With all opt-in features &bull; <code>workflow.yml</code></div>
+    <pre>- name: Convert Markdown to PDF
+  uses: bryanpaget/markdown-to-pdf@main
+  with:
+    markdown_file: "docs/report.md"
+    pdf_file:      "output/report.pdf"
+    code_block_style: "true"
+    page_breaks:      "sections"
+    font:             "arial"</pre>
+
     <h3 style="margin-top:36px;">Inputs</h3>
     <table class="sample-table">
       <thead>
@@ -445,6 +470,9 @@
         <tr><td><code>docx_file</code></td><td>no</td><td>Path to the source Word document (.docx/.doc)</td></tr>
         <tr><td><code>markdown_file</code></td><td>no</td><td>Path to a Markdown file (auto-converted to .docx first)</td></tr>
         <tr><td><code>pdf_file</code></td><td>yes</td><td>Path where the resulting PDF should be written</td></tr>
+        <tr><td><code>code_block_style</code></td><td>no</td><td>When <code>true</code>, code blocks get a light background and smaller font</td></tr>
+        <tr><td><code>page_breaks</code></td><td>no</td><td>When <code>sections</code>, each H1 heading starts on a new page</td></tr>
+        <tr><td><code>font</code></td><td>no</td><td>When <code>arial</code>, switches the document font to Arial</td></tr>
       </tbody>
     </table>
     <p style="margin-top:8px;font-size:0.85rem;color:var(--muted);">Provide either <code>docx_file</code> or <code>markdown_file</code> &mdash; not both.</p>
