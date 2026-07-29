@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>markdown-to-pdf · GitHub Action</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --accent:    #58a6ff;
+      --green:     #3fb950;
+      --orange:    #d29922;
+      --radius:    8px;
+      --max-w:     920px;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85em;
+    }
+
+    .container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+
+    /* Hero */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      margin-top: 16px;
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 640px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .hero-buttons {
+      margin-top: 32px;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: var(--radius);
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: background .15s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0d1117;
+    }
+    .btn-primary:hover { background: #79b8ff; text-decoration: none; }
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: #1c2128; text-decoration: none; }
+
+    /* Screenshot */
+    .screenshot {
+      padding: 48px 0;
+      text-align: center;
+    }
+    .screenshot img {
+      max-width: 100%;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    }
+    .screenshot figcaption {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    /* Sections */
+    section { padding: 60px 0; }
+    section + section { border-top: 1px solid var(--border); }
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    h2 + p { color: var(--muted); margin-bottom: 32px; }
+
+    /* Features grid */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .feature {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .feature-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      margin-bottom: 12px;
+    }
+    .feature h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .feature p { font-size: 0.9rem; color: var(--muted); }
+
+    /* Samples table */
+    .sample-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .sample-table th, .sample-table td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sample-table th {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .sample-table td:last-child { text-align: right; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .badge-md   { background: #1f6feb22; color: #58a6ff; }
+    .badge-docx { background: #3fb95022; color: #3fb950; }
+
+    /* Code blocks */
+    pre {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      line-height: 1.55;
+      color: #e6edf3;
+    }
+    .code-header {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom: 0;
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 8px 16px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .code-header + pre { border-radius: 0 0 var(--radius) var(--radius); }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--text); }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.8rem; }
+      .hero { padding: 48px 0 36px; }
+      section { padding: 36px 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="container">
+    <h1><span>markdown</span>-to-pdf</h1>
+    <p>
+      A GitHub composite action that converts Markdown or Word documents to PDF
+      using Pandoc and LibreOffice — preserving layout, fonts, and template styling.
+    </p>
+    <div class="hero-buttons">
+      <a class="btn btn-primary" href="https://github.com/bryanpaget/markdown-to-pdf">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub
+      </a>
+      <a class="btn btn-secondary" href="#samples">Sample outputs</a>
+      <a class="btn btn-secondary" href="#usage">Usage</a>
+    </div>
+  </div>
+</div>
+
+<figure class="screenshot">
+  <div class="container">
+    <img src="https://raw.githubusercontent.com/bryanpaget/markdown-to-pdf/main/assets/screenshot-comparison.png"
+         alt="Side-by-side comparison of Markdown source and rendered PDF">
+    <figcaption>Markdown source (left) vs rendered PDF output (right)</figcaption>
+  </div>
+</figure>
+
+<section id="features">
+  <div class="container">
+    <h2>Features</h2>
+    <p>What this action does out of the box.</p>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon" style="background:#1f6feb22;color:#58a6ff;">&#8594;</div>
+        <h3>Markdown → PDF</h3>
+        <p>Feed it a <code>.md</code> file; it handles Pandoc conversion and PDF rendering automatically.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" style="background:#3fb95022;color:#3fb950;">W</div>
+        <h3>Word → PDF</h3>
+        <p>Already have a <code>.docx</code> file? Pass it directly &mdash; no markdown step needed.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" style="background:#d2992222;color:#d29922;">&equiv;</div>
+        <h3>Table auto-fix</h3>
+        <p>Rewrites fixed-column-width tables to percentage-based widths and adds visible borders.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" style="background:#db6d2822;color:#db6d28;">F</div>
+        <h3>Font substitution</h3>
+        <p>Installs Carlito as a metric-compatible Calibri substitute, plus Microsoft core fonts.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" style="background:#8957e522;color:#a371f7;">#</div>
+        <h3>Embedded images</h3>
+        <p>Images referenced in markdown are embedded in the DOCX and rendered in the PDF.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" style="background:#f0883e22;color:#f0883e;">+</div>
+        <h3>Zero-config setup</h3>
+        <p>Pandoc, LibreOffice, and fonts are auto-installed on the runner. Just point and run.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="samples">
+  <div class="container">
+    <h2>Sample outputs</h2>
+    <p>
+      Every push to <code>main</code> publishes a
+      <a href="https://github.com/bryanpaget/markdown-to-pdf/releases">GitHub Release</a>
+      with pre-built artifacts from the <a href="https://github.com/bryanpaget/markdown-to-pdf/blob/main/samples/complex-document.md">sample document</a>
+      — a rich Markdown file exercising tables, code blocks, lists, and embedded financial charts.
+    </p>
+
+    <table class="sample-table">
+      <thead>
+        <tr><th>File</th><th>Source</th><th>Download</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>complex-document-source.md</code></td>
+          <td><span class="badge badge-md">Markdown</span></td>
+          <td><a href="https://github.com/bryanpaget/markdown-to-pdf/releases/latest/download/complex-document-source.md">Download</a></td>
+        </tr>
+        <tr>
+          <td><code>complex-document.docx</code></td>
+          <td><span class="badge badge-docx">DOCX</span></td>
+          <td><a href="https://github.com/bryanpaget/markdown-to-pdf/releases/latest/download/complex-document.docx">Download</a></td>
+        </tr>
+        <tr>
+          <td><code>complex-document-from-docx.pdf</code></td>
+          <td>DOCX → PDF</td>
+          <td><a href="https://github.com/bryanpaget/markdown-to-pdf/releases/latest/download/complex-document-from-docx.pdf">Download</a></td>
+        </tr>
+        <tr>
+          <td><code>complex-document-from-markdown.pdf</code></td>
+          <td>Markdown → PDF</td>
+          <td><a href="https://github.com/bryanpaget/markdown-to-pdf/releases/latest/download/complex-document-from-markdown.pdf">Download</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="margin-top:20px;font-size:0.9rem;color:var(--muted);">
+      PDF previews &mdash; rendered from the sample document:
+    </p>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;">
+      <div style="flex:1;min-width:260px;">
+        <a href="https://github.com/bryanpaget/markdown-to-pdf/releases/latest/download/complex-document-from-markdown.pdf">
+          <img src="https://raw.githubusercontent.com/bryanpaget/markdown-to-pdf/main/samples/images/portfolio-allocation.png"
+               alt="Portfolio allocation chart from sample PDF"
+               style="width:100%;border-radius:var(--radius);border:1px solid var(--border);">
+        </a>
+        <p style="font-size:0.8rem;color:var(--muted);margin-top:6px;">Markdown → PDF</p>
+      </div>
+      <div style="flex:1;min-width:260px;">
+        <a href="https://github.com/bryanpaget/markdown-to-pdf/releases/latest/download/complex-document-from-docx.pdf">
+          <img src="https://raw.githubusercontent.com/bryanpaget/markdown-to-pdf/main/samples/images/candlestick.png"
+               alt="Candlestick chart from sample PDF"
+               style="width:100%;border-radius:var(--radius);border:1px solid var(--border);">
+        </a>
+        <p style="font-size:0.8rem;color:var(--muted);margin-top:6px;">DOCX → PDF</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="usage">
+  <div class="container">
+    <h2>Usage</h2>
+    <p>Add a step to your GitHub Actions workflow.</p>
+
+    <div class="code-header">From a Markdown file &bull; <code>workflow.yml</code></div>
+    <pre>- name: Convert Markdown to PDF
+  uses: bryanpaget/markdown-to-pdf@main
+  with:
+    markdown_file: "docs/readme.md"
+    pdf_file:      "output/readme.pdf"</pre>
+
+    <div style="margin-top:20px;" class="code-header">From a Word document &bull; <code>workflow.yml</code></div>
+    <pre>- name: Convert Word to PDF
+  uses: bryanpaget/markdown-to-pdf@main
+  with:
+    docx_file: "output/document.docx"
+    pdf_file:  "output/document.pdf"</pre>
+
+    <h3 style="margin-top:36px;">Inputs</h3>
+    <table class="sample-table">
+      <thead>
+        <tr><th>Input</th><th>Required</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>docx_file</code></td><td>no</td><td>Path to the source Word document (.docx/.doc)</td></tr>
+        <tr><td><code>markdown_file</code></td><td>no</td><td>Path to a Markdown file (auto-converted to .docx first)</td></tr>
+        <tr><td><code>pdf_file</code></td><td>yes</td><td>Path where the resulting PDF should be written</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:8px;font-size:0.85rem;color:var(--muted);">Provide either <code>docx_file</code> or <code>markdown_file</code> &mdash; not both.</p>
+
+    <h3 style="margin-top:36px;">Outputs</h3>
+    <table class="sample-table">
+      <thead><tr><th>Output</th><th>Description</th></tr></thead>
+      <tbody><tr><td><code>pdf_file</code></td><td>Resolved path to the generated PDF</td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p><a href="https://github.com/bryanpaget/markdown-to-pdf">bryanpaget/markdown-to-pdf</a> &middot; GPL or similar</p>
+  </div>
+</footer>
+
+</body>
+</html>
