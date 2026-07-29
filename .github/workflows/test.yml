@@ -17,8 +17,8 @@ jobs:
 
       - name: Install Pandoc
         run: |
-          wget -q https://github.com/jgm/pandoc/releases/download/3.10/pandoc-3.10-1-amd64.deb
-          sudo dpkg -i pandoc-3.10-1-amd64.deb
+          wget -q https://github.com/jgm/pandoc/releases/download/3.9.0.2/pandoc-3.9.0.2-1-amd64.deb
+          sudo dpkg -i pandoc-3.6.4-1-amd64.deb
 
       - name: Create sample DOCX
         run: |
@@ -38,7 +38,6 @@ jobs:
           |----------|----------|
           | Cell 1   | Cell 2   |
           EOF
-          pandoc /tmp/sample.md -o output/sample.docx --reference-doc=template.docx 2>/dev/null || \
           pandoc /tmp/sample.md -o output/sample.docx
 
       - name: Convert to PDF
