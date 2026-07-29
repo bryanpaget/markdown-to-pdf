@@ -390,20 +390,43 @@ def fix_section_page_breaks(doc_root: ET.Element) -> int:
 # ---------------------------------------------------------------------------
 
 def fix_font_arial(styles_root: ET.Element) -> int:
-    """Switch all paragraph styles to Arial."""
+    """Switch document default and every style to Arial; SourceCode stays monospace."""
     fixed = 0
+
+    # Document default — catches text not covered by an explicit style.
+    docDefaults = styles_root.find(W + "docDefaults")
+    if docDefaults is None:
+        docDefaults = ET.SubElement(styles_root, W + "docDefaults")
+    rPrDefault = docDefaults.find(W + "rPrDefault")
+    if rPrDefault is None:
+        rPrDefault = ET.SubElement(docDefaults, W + "rPrDefault")
+    rPr = rPrDefault.find(W + "rPr")
+    if rPr is None:
+        rPr = ET.SubElement(rPrDefault, W + "rPr")
+    rFonts = rPr.find(W + "rFonts")
+    if rFonts is None:
+        rFonts = ET.SubElement(rPr, W + "rFonts")
+    for attr in ("ascii", "hAnsi", "cs", "eastAsia"):
+        rFonts.set(W + attr, "Arial")
+    fixed += 1
+
     for st in styles_root.iter(W + "style"):
-        if st.get(W + "styleId") in ("SourceCode",):
-            continue
+        style_id = st.get(W + "styleId", "")
         rPr = st.find(W + "rPr")
         if rPr is None:
-            continue
+            rPr = ET.SubElement(st, W + "rPr")
         rFonts = rPr.find(W + "rFonts")
         if rFonts is None:
             rFonts = ET.SubElement(rPr, W + "rFonts")
-        rFonts.set(W + "ascii", "Arial")
-        rFonts.set(W + "hAnsi", "Arial")
-        rFonts.set(W + "cs", "Arial")
+
+        if style_id == "SourceCode":
+            rFonts.set(W + "ascii", "Courier New")
+            rFonts.set(W + "hAnsi", "Courier New")
+            rFonts.set(W + "cs", "Courier New")
+            continue
+
+        for attr in ("ascii", "hAnsi", "cs", "eastAsia"):
+            rFonts.set(W + attr, "Arial")
         fixed += 1
     return fixed
 
