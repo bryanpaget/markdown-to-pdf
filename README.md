@@ -38,12 +38,13 @@ not possible with a separate Pandoc/LaTeX render.
 
 ## Inputs
 
-| Input             | Required | Description                                             |
-|-------------------|----------|---------------------------------------------------------|
-| `docx_file`       | no       | Path to the source Word document (.docx/.doc).          |
-| `markdown_file`   | no       | Path to a Markdown file (auto-converted to .docx first).|
-| `pdf_file`        | yes      | Path where the resulting PDF should be written.         |
+| Input             | Required | Description                                                        |
+|-------------------|----------|--------------------------------------------------------------------|
+| `docx_file`       | no       | Path to the source Word document (.docx/.doc).                     |
+| `markdown_file`   | no       | Path to a Markdown file (auto-converted to .docx first).           |
+| `pdf_file`        | yes      | Path where the resulting PDF should be written.                    |
 | `code_block_style`| no       | When `"true"`, code blocks render with a light background and smaller font. Default `"false"`. |
+| `page_breaks`     | no       | When `"sections"`, each H1 heading starts on a new page. Default `"none"`. |
 
 Provide either `docx_file` or `markdown_file` (not both).
 

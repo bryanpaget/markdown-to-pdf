@@ -45,6 +45,7 @@ jobs:
         with:
           docx_file: "output/sample.docx"
           pdf_file: "output/sample.pdf"
+          page_breaks: "sections"
 
       - name: Verify PDF is valid
         run: |
@@ -102,6 +103,7 @@ jobs:
         with:
           markdown_file: "output/sample.md"
           pdf_file: "output/sample.pdf"
+          page_breaks: "sections"
 
       - name: Verify PDF is valid
         run: |

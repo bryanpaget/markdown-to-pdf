@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Post-process a .docx produced by pandoc + SSC template before LibreOffice converts it.
 
-Four fixes are applied:
+Seven fixes are applied:
 
 1. TABLE WIDTH — Pandoc emits tables with a fixed tblW of 5000 twips (~3.5in) and a
    fixed layout.  When rendered by LibreOffice/Word, wide tables get crushed into
@@ -27,10 +27,17 @@ Four fixes are applied:
 5. TITLE PAGE HEADING INDENT — Heading1 paragraphs on the title page are given a
    right indent so they don't overlap the decorative leaf graphic in the header.
 
+6. CODE BLOCK STYLE — (opt-in) When enabled, SourceCode paragraphs get a light-grey
+   background and 9pt font.
+
+7. SECTION PAGE BREAKS — (opt-in, page_breaks="sections") Each Heading1 paragraph
+   gets a page break before it, so sections begin on a new page.
+
 Usage:
-    python3 fix-docx-tables.py <file.docx> [...]                  (default style)
-    python3 fix-docx-tables.py true    <file.docx> [...]          (opt-in code style)
-    python3 fix-docx-tables.py <file.docx> true                   (flag at end)
+    python3 fix-docx-tables.py <file.docx> [...]                    (default)
+    python3 fix-docx-tables.py true    <file.docx> [...]            (code style)
+    python3 fix-docx-tables.py <file.docx> true                     (flag at end)
+    python3 fix-docx-tables.py <file.docx> true sections            (both opts)
 """
 import sys
 import zipfile
@@ -352,9 +359,30 @@ def fix_code_block_style(styles_root: ET.Element) -> bool:
     return False
 
 
-def fix_doc(path: str, code_style: bool = False) -> dict:
+# ---------------------------------------------------------------------------
+# Fix 7: section page breaks (opt-in)
+# ---------------------------------------------------------------------------
+
+def fix_section_page_breaks(doc_root: ET.Element) -> int:
+    """Add a page break before every Heading1 paragraph."""
+    fixed = 0
+    for p in doc_root.iter(W + "p"):
+        pPr = p.find(W + "pPr")
+        if pPr is None:
+            continue
+        pStyle = pPr.find(W + "pStyle")
+        if pStyle is None or pStyle.get(W + "val") != "Heading1":
+            continue
+        if pPr.find(W + "pageBreakBefore") is not None:
+            continue
+        ET.SubElement(pPr, W + "pageBreakBefore")
+        fixed += 1
+    return fixed
+
+
+def fix_doc(path: str, code_style: bool = False, page_breaks: str = "none") -> dict:
     tmp = path + ".tmp"
-    counts = {"tables": 0, "classif_boxes": 0, "styles": False, "injected": [], "code_style": False}
+    counts = {"tables": 0, "classif_boxes": 0, "styles": False, "injected": [], "code_style": False, "page_breaks": 0}
 
     with zipfile.ZipFile(path) as zin:
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
@@ -373,6 +401,15 @@ def fix_doc(path: str, code_style: bool = False) -> dict:
                 elif name.startswith("word/header") and name.endswith(".xml"):
                     root = ET.fromstring(data)
                     counts["classif_boxes"] += fix_classification_textboxes(root)
+                    data = ET.tostring(root, xml_declaration=True, encoding="UTF-8")
+
+                elif name == "word/document.xml":
+                    root = ET.fromstring(data)
+                    for tbl in root.iter(W + "tbl"):
+                        fix_table(tbl)
+                        counts["tables"] += 1
+                    if page_breaks == "sections":
+                        counts["page_breaks"] = fix_section_page_breaks(root)
                     data = ET.tostring(root, xml_declaration=True, encoding="UTF-8")
 
                 elif (
@@ -395,29 +432,36 @@ def fix_doc(path: str, code_style: bool = False) -> dict:
 def main() -> None:
     if len(sys.argv) < 2:
         print(
-            "usage: fix-docx-tables.py [code_style] <file.docx> [...]",
+            "usage: fix-docx-tables.py [code_style] [page_breaks] <file.docx> [...]",
             file=sys.stderr,
         )
         sys.exit(1)
     args = list(sys.argv[1:])
+
+    # Pop page_breaks value from the end if present (action always passes it).
+    page_breaks = "none"
+    if args and args[-1] in ("none", "sections"):
+        page_breaks = args.pop()
+
+    # The code_style boolean may be the first or last remaining argument.
     code_style = False
-    # The code_style flag may be the first or last argument.
-    # Check last first to handle the default "false" that the action always passes.
     for i in (-1, 0):
         if len(args) > 0 and args[i].lower() in ("true", "false", "1", "0", "yes", "no"):
             code_style = args.pop(i).lower() in ("true", "1", "yes")
             break
+
     if not args:
         print("No DOCX files provided.", file=sys.stderr)
         sys.exit(1)
     for path in args:
-        c = fix_doc(path, code_style=code_style)
+        c = fix_doc(path, code_style=code_style, page_breaks=page_breaks)
         injected_str = (f", injected styles: {c['injected']}") if c["injected"] else ""
         code_str = ", code blocks styled" if c["code_style"] else ""
+        pb_str = f", {c['page_breaks']} section page breaks" if c["page_breaks"] else ""
         print(
             f"{path}: {c['tables']} table(s), "
             f"{c['classif_boxes']} classification box(es) widened"
-            f"{injected_str}{code_str}"
+            f"{injected_str}{code_str}{pb_str}"
         )
 
 
