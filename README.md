@@ -45,6 +45,7 @@ not possible with a separate Pandoc/LaTeX render.
 | `pdf_file`        | yes      | Path where the resulting PDF should be written.                    |
 | `code_block_style`| no       | When `"true"`, code blocks render with a light background and smaller font. Default `"false"`. |
 | `page_breaks`     | no       | When `"sections"`, each H1 heading starts on a new page. Default `"none"`. |
+| `footnote_style`  | no       | When `"small"`, footnote text is rendered in 8pt font. Default `"default"`. |
 
 Provide either `docx_file` or `markdown_file` (not both).
 

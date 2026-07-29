@@ -2,7 +2,7 @@
 """Post-process a .docx produced from Markdown (via Pandoc) before LibreOffice
 converts it to PDF.  Can be used standalone or as a library.
 
-Seven fixes are applied:
+Eight fixes are applied:
 
 1. TABLE WIDTH — Pandoc emits tables with a fixed tblW of 5000 twips (~3.5in) and a
    fixed layout.  When rendered by LibreOffice/Word, wide tables get crushed into
@@ -34,11 +34,14 @@ Seven fixes are applied:
 7. SECTION PAGE BREAKS — (opt-in, page_breaks="sections") Each Heading1 paragraph
    gets a page break before it, so sections begin on a new page.
 
+8. FOOTNOTE STYLE — (opt-in, footnote_style="small") The Footnote Text paragraph
+   style is reduced to 8pt for a more polished academic look.
+
 Usage:
-    python3 lib/fix-docx.py <file.docx> [...]                    (default)
-    python3 lib/fix-docx.py true    <file.docx> [...]            (code style)
-    python3 lib/fix-docx.py <file.docx> true                     (flag at end)
-    python3 lib/fix-docx.py <file.docx> true sections            (both opts)
+    python3 lib/fix-docx.py <file.docx> [...]                         (default)
+    python3 lib/fix-docx.py true    <file.docx> [...]                 (code style)
+    python3 lib/fix-docx.py <file.docx> true                          (flag at end)
+    python3 lib/fix-docx.py <file.docx> true sections small           (all opts)
 """
 import sys
 import zipfile
@@ -381,9 +384,30 @@ def fix_section_page_breaks(doc_root: ET.Element) -> int:
     return fixed
 
 
-def fix_doc(path: str, code_style: bool = False, page_breaks: str = "none") -> dict:
+# ---------------------------------------------------------------------------
+# Fix 8: footnote style (opt-in)
+# ---------------------------------------------------------------------------
+FOOTNOTE_SMALL_SZ = "16"     # half-points → 8pt
+
+def fix_footnote_style(styles_root: ET.Element) -> bool:
+    """Set Footnote Text paragraph style to a smaller font size."""
+    for st in styles_root.iter(W + "style"):
+        if st.get(W + "styleId") == "FootnoteText":
+            rPr = st.find(W + "rPr")
+            if rPr is None:
+                rPr = ET.SubElement(st, W + "rPr")
+            for tag in ("sz", "szCs"):
+                el = rPr.find(W + tag)
+                if el is None:
+                    el = ET.SubElement(rPr, tag)
+                el.set(W + "val", FOOTNOTE_SMALL_SZ)
+            return True
+    return False
+
+
+def fix_doc(path: str, code_style: bool = False, page_breaks: str = "none", footnote_style: str = "default") -> dict:
     tmp = path + ".tmp"
-    counts = {"tables": 0, "classif_boxes": 0, "styles": False, "injected": [], "code_style": False, "page_breaks": 0}
+    counts = {"tables": 0, "classif_boxes": 0, "styles": False, "injected": [], "code_style": False, "page_breaks": 0, "footnote_style": False}
 
     with zipfile.ZipFile(path) as zin:
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
@@ -396,6 +420,8 @@ def fix_doc(path: str, code_style: bool = False, page_breaks: str = "none") -> d
                     counts["injected"] = fix_missing_styles(root)
                     if code_style:
                         counts["code_style"] = fix_code_block_style(root)
+                    if footnote_style == "small":
+                        counts["footnote_style"] = fix_footnote_style(root)
                     counts["styles"] = True
                     data = ET.tostring(root, xml_declaration=True, encoding="UTF-8")
 
@@ -433,13 +459,19 @@ def fix_doc(path: str, code_style: bool = False, page_breaks: str = "none") -> d
 def main() -> None:
     if len(sys.argv) < 2:
         print(
-            "usage: fix-docx.py [code_style] [page_breaks] <file.docx> [...]",
+            "usage: fix-docx.py [code_style] [page_breaks] [footnote_style] "
+            "<file.docx> [...]",
             file=sys.stderr,
         )
         sys.exit(1)
     args = list(sys.argv[1:])
 
-    # Pop page_breaks value from the end if present (action always passes it).
+    # Pop footnote_style from the end if present.
+    footnote_style = "default"
+    if args and args[-1] in ("default", "small"):
+        footnote_style = args.pop()
+
+    # Pop page_breaks from the end if present.
     page_breaks = "none"
     if args and args[-1] in ("none", "sections"):
         page_breaks = args.pop()
@@ -455,14 +487,16 @@ def main() -> None:
         print("No DOCX files provided.", file=sys.stderr)
         sys.exit(1)
     for path in args:
-        c = fix_doc(path, code_style=code_style, page_breaks=page_breaks)
+        c = fix_doc(path, code_style=code_style, page_breaks=page_breaks,
+                    footnote_style=footnote_style)
         injected_str = (f", injected styles: {c['injected']}") if c["injected"] else ""
         code_str = ", code blocks styled" if c["code_style"] else ""
         pb_str = f", {c['page_breaks']} section page breaks" if c["page_breaks"] else ""
+        fn_str = ", footnotes styled" if c["footnote_style"] else ""
         print(
             f"{path}: {c['tables']} table(s), "
             f"{c['classif_boxes']} classification box(es) widened"
-            f"{injected_str}{code_str}{pb_str}"
+            f"{injected_str}{code_str}{pb_str}{fn_str}"
         )
 
 

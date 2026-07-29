@@ -37,6 +37,12 @@ inputs:
       Defaults to 'none' for backwards compatibility.
     required: false
     default: "none"
+  footnote_style:
+    description: >-
+      When 'small', footnote text is rendered in 8pt font for a more polished
+      appearance. Defaults to 'default'.
+    required: false
+    default: "default"
 
 outputs:
   pdf_file:
@@ -145,7 +151,8 @@ runs:
         python3 "${{ github.action_path }}/lib/fix-docx.py" \
           "${{ steps.resolve.outputs.docx_file }}" \
           "${{ inputs.code_block_style }}" \
-          "${{ inputs.page_breaks }}"
+          "${{ inputs.page_breaks }}" \
+          "${{ inputs.footnote_style }}"
 
     - name: Convert Word document to PDF
       id: convert
