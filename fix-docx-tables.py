@@ -28,7 +28,9 @@ Four fixes are applied:
    right indent so they don't overlap the decorative leaf graphic in the header.
 
 Usage:
-    python3 fix-docx-tables.py <file.docx> [<file2.docx> ...]
+    python3 fix-docx-tables.py <file.docx> [...]                  (default style)
+    python3 fix-docx-tables.py true    <file.docx> [...]          (opt-in code style)
+    python3 fix-docx-tables.py <file.docx> true                   (flag at end)
 """
 import sys
 import zipfile
@@ -393,15 +395,18 @@ def fix_doc(path: str, code_style: bool = False) -> dict:
 def main() -> None:
     if len(sys.argv) < 2:
         print(
-            "usage: fix-docx-tables.py <file.docx> [code_style] [<file2.docx> ...]",
+            "usage: fix-docx-tables.py [code_style] <file.docx> [...]",
             file=sys.stderr,
         )
         sys.exit(1)
-    args = sys.argv[1:]
+    args = list(sys.argv[1:])
     code_style = False
-    if args and args[0].lower() in ("true", "1", "yes"):
-        code_style = True
-        args = args[1:]
+    # The code_style flag may be the first or last argument.
+    # Check last first to handle the default "false" that the action always passes.
+    for i in (-1, 0):
+        if len(args) > 0 and args[i].lower() in ("true", "false", "1", "0", "yes", "no"):
+            code_style = args.pop(i).lower() in ("true", "1", "yes")
+            break
     if not args:
         print("No DOCX files provided.", file=sys.stderr)
         sys.exit(1)
