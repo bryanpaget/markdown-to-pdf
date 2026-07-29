@@ -79,8 +79,8 @@ runs:
       shell: bash
       run: |
         if ! command -v pandoc >/dev/null 2>&1; then
-          wget -q https://github.com/jgm/pandoc/releases/download/3.9.0.2/pandoc-3.9.0.2-1-amd64.deb
-          sudo dpkg -i pandoc-3.9.0.2-1-amd64.deb
+          wget -q https://github.com/jgm/pandoc/releases/download/3.10.1/pandoc-3.10.1-1-amd64.deb
+          sudo dpkg -i pandoc-3.10.1-1-amd64.deb
         fi
         pandoc --version
 
