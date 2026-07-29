@@ -41,6 +41,24 @@
       padding: 80px 0 60px;
       text-align: center;
       border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(180deg, #0d1117 0%, #0d1b2a 40%, #1b2838 70%, #0d1117 100%);
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .hero-bg svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .hero .container {
+      position: relative;
+      z-index: 1;
     }
     .hero-icon {
       margin-bottom: 20px;
@@ -213,7 +231,8 @@
     /* Responsive */
     @media (max-width: 600px) {
       .hero h1 { font-size: 1.8rem; }
-      .hero { padding: 48px 0 36px; }
+      .hero { padding: 48px 0 24px; }
+      .hero-bg svg { height: 280px; }
       section { padding: 36px 0; }
     }
   </style>
@@ -221,6 +240,40 @@
 <body>
 
 <div class="hero">
+  <div class="hero-bg">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 400" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0d1117"/>
+          <stop offset="60%" stop-color="#1b2838"/>
+          <stop offset="100%" stop-color="#0d1117"/>
+        </linearGradient>
+      </defs>
+      <rect width="1440" height="400" fill="url(#sky)"/>
+      <!-- birds -->
+      <g fill="none" stroke="#2d4055" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.6">
+        <path d="M1080 80l12 10 12-10"/>
+        <path d="M1120 60l10 8 10-8"/>
+        <path d="M1050 100l8 6 8-6"/>
+        <path d="M1160 90l14 10 14-10" stroke-width="1.5" opacity="0.4"/>
+        <path d="M1020 70l10 8 10-8" stroke-width="1.5" opacity="0.4"/>
+      </g>
+      <!-- distant mountains -->
+      <path d="M0 260 Q120 200 240 230 Q360 180 480 220 Q560 190 640 210 Q760 170 880 200
+               Q1000 180 1120 210 Q1240 190 1360 220 L1440 200 L1440 400 L0 400Z"
+            fill="#1a2d42" opacity="0.5"/>
+      <!-- mid mountains -->
+      <path d="M0 300 Q80 250 160 270 Q240 220 360 260 Q440 230 520 250
+               Q640 210 760 240 Q880 220 1000 250 Q1120 230 1240 260 Q1360 240 1440 270 L1440 400 L0 400Z"
+            fill="#243853" opacity="0.5"/>
+      <!-- foreground hills -->
+      <path d="M0 340 Q160 290 320 320 Q480 280 640 310 Q800 270 960 300
+               Q1120 280 1280 310 L1440 290 L1440 400 L0 400Z"
+            fill="#2d4055" opacity="0.6"/>
+      <!-- ground -->
+      <rect y="370" width="1440" height="30" fill="#0d1117" opacity="0.8"/>
+    </svg>
+  </div>
   <div class="container">
     <div class="hero-icon">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="80" height="80">

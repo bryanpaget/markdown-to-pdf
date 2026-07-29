@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/favicon.svg" width="100" alt="markdown-to-pdf icon">
+</p>
+
 # Markdown/Word to PDF
 
 A GitHub Action that converts Markdown or Word (`.docx`/`.doc`) files
@@ -34,11 +38,12 @@ not possible with a separate Pandoc/LaTeX render.
 
 ## Inputs
 
-| Input           | Required | Description                                             |
-|-----------------|----------|---------------------------------------------------------|
-| `docx_file`     | no       | Path to the source Word document (.docx/.doc).          |
-| `markdown_file` | no       | Path to a Markdown file (auto-converted to .docx first).|
-| `pdf_file`      | yes      | Path where the resulting PDF should be written.         |
+| Input             | Required | Description                                             |
+|-------------------|----------|---------------------------------------------------------|
+| `docx_file`       | no       | Path to the source Word document (.docx/.doc).          |
+| `markdown_file`   | no       | Path to a Markdown file (auto-converted to .docx first).|
+| `pdf_file`        | yes      | Path where the resulting PDF should be written.         |
+| `code_block_style`| no       | When `"true"`, code blocks render with a light background and smaller font. Default `"false"`. |
 
 Provide either `docx_file` or `markdown_file` (not both).
 

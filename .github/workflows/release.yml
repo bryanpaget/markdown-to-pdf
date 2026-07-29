@@ -39,12 +39,14 @@ jobs:
         with:
           docx_file: samples/complex-document.docx
           pdf_file: samples/complex-document-from-docx.pdf
+          code_block_style: "true"
 
       - name: Build PDF from markdown
         uses: ./
         with:
           markdown_file: samples/complex-document.md
           pdf_file: samples/complex-document-from-markdown.pdf
+          code_block_style: "true"
 
       - name: Stage release assets
         run: |

@@ -316,9 +316,43 @@ def fix_titlepage_headings(doc_root: ET.Element) -> int:
     return fixed
 
 
-def fix_doc(path: str) -> dict:
+# ---------------------------------------------------------------------------
+# Fix 6: code block style (opt-in)
+# ---------------------------------------------------------------------------
+CODE_BG_FILL  = "F5F5F5"    # light grey background
+CODE_FONT_SZ  = "18"         # half-points → 9pt (smaller than default 10pt)
+
+def fix_code_block_style(styles_root: ET.Element) -> bool:
+    for st in styles_root.iter(W + "style"):
+        if st.get(W + "styleId") == "SourceCode":
+            pPr = st.find(W + "pPr")
+            if pPr is None:
+                pPr = ET.SubElement(st, W + "pPr")
+
+            # Light background
+            shd = pPr.find(W + "shd")
+            if shd is None:
+                shd = ET.SubElement(pPr, W + "shd")
+            shd.set(W + "val", "clear")
+            shd.set(W + "color", "auto")
+            shd.set(W + "fill", CODE_BG_FILL)
+
+            # Smaller font on runs inside code blocks
+            rPr = st.find(W + "rPr")
+            if rPr is None:
+                rPr = ET.SubElement(st, W + "rPr")
+            for tag in ("sz", "szCs"):
+                el = rPr.find(W + tag)
+                if el is None:
+                    el = ET.SubElement(rPr, tag)
+                el.set(W + "val", CODE_FONT_SZ)
+            return True
+    return False
+
+
+def fix_doc(path: str, code_style: bool = False) -> dict:
     tmp = path + ".tmp"
-    counts = {"tables": 0, "classif_boxes": 0, "styles": False, "injected": []}
+    counts = {"tables": 0, "classif_boxes": 0, "styles": False, "injected": [], "code_style": False}
 
     with zipfile.ZipFile(path) as zin:
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
@@ -329,6 +363,8 @@ def fix_doc(path: str) -> dict:
                     root = ET.fromstring(data)
                     fix_heading2_styles(root)
                     counts["injected"] = fix_missing_styles(root)
+                    if code_style:
+                        counts["code_style"] = fix_code_block_style(root)
                     counts["styles"] = True
                     data = ET.tostring(root, xml_declaration=True, encoding="UTF-8")
 
@@ -357,17 +393,26 @@ def fix_doc(path: str) -> dict:
 def main() -> None:
     if len(sys.argv) < 2:
         print(
-            "usage: fix-docx-tables.py <file.docx> [<file2.docx> ...]",
+            "usage: fix-docx-tables.py <file.docx> [code_style] [<file2.docx> ...]",
             file=sys.stderr,
         )
         sys.exit(1)
-    for path in sys.argv[1:]:
-        c = fix_doc(path)
+    args = sys.argv[1:]
+    code_style = False
+    if args and args[0].lower() in ("true", "1", "yes"):
+        code_style = True
+        args = args[1:]
+    if not args:
+        print("No DOCX files provided.", file=sys.stderr)
+        sys.exit(1)
+    for path in args:
+        c = fix_doc(path, code_style=code_style)
         injected_str = (f", injected styles: {c['injected']}") if c["injected"] else ""
+        code_str = ", code blocks styled" if c["code_style"] else ""
         print(
             f"{path}: {c['tables']} table(s), "
             f"{c['classif_boxes']} classification box(es) widened"
-            f"{injected_str}"
+            f"{injected_str}{code_str}"
         )
 
 

@@ -25,6 +25,12 @@ inputs:
   pdf_file:
     description: "Path where the resulting PDF should be written."
     required: true
+  code_block_style:
+    description: >-
+      When 'true', code blocks are rendered with a light background and smaller
+      font. Defaults to 'false' for backwards compatibility.
+    required: false
+    default: "false"
 
 outputs:
   pdf_file:
@@ -130,7 +136,9 @@ runs:
     - name: Fix DOCX table widths and styles
       shell: bash
       run: |
-        python3 "${{ github.action_path }}/fix-docx-tables.py" "${{ steps.resolve.outputs.docx_file }}"
+        python3 "${{ github.action_path }}/fix-docx-tables.py" \
+          "${{ steps.resolve.outputs.docx_file }}" \
+          "${{ inputs.code_block_style }}"
 
     - name: Convert Word document to PDF
       id: convert
