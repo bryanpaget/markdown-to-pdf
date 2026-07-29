@@ -57,6 +57,12 @@ jobs:
           sudo apt-get install -y -qq poppler-utils
           pip3 install Pillow pygments --break-system-packages -q
 
+      - name: Build screenshot demo
+        run: |
+          pandoc samples/screenshot-demo.md --resource-path=samples -o samples/screenshot-demo.docx
+          python3 lib/fix-docx.py samples/screenshot-demo.docx
+          soffice --headless --convert-to pdf --outdir samples/ samples/screenshot-demo.docx
+
       - name: Generate comparison screenshot
         run: python3 lib/gen-screenshot.py
 
