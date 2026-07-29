@@ -103,7 +103,7 @@ jobs:
 
             | File | Description |
             |------|-------------|
-            | \`complex-document-source.md\` | Original markdown source with tables, code blocks, and embedded financial charts |
+            | \`complex-document-source.md\` | Original markdown source with tables, code blocks, lists, blockquotes, and embedded financial charts |
             | \`complex-document.docx\` | Intermediate DOCX produced by Pandoc |
             | \`complex-document-from-docx.pdf\` | PDF rendered via DOCX → LibreOffice |
             | \`complex-document-from-markdown.pdf\` | PDF rendered via Markdown → Pandoc → LibreOffice |

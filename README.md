@@ -1,6 +1,6 @@
 # Markdown/Word to PDF
 
-A GitHub composite Action that converts Markdown or Word (`.docx`/`.doc`) files
+A GitHub Action that converts Markdown or Word (`.docx`/`.doc`) files
 to PDF. Markdown files are first converted to `.docx` via
 [Pandoc](https://pandoc.org/), then the Word document is converted to PDF using
 [LibreOffice](https://www.libreoffice.org/) in headless mode.
@@ -9,23 +9,6 @@ to PDF. Markdown files are first converted to `.docx` via
 
 The PDF preserves the document's layout, fonts, and template styling, which is
 not possible with a separate Pandoc/LaTeX render.
-
-## Performance
-
-Key optimization opportunities for this action:
-
-| Area | Issue | Recommendation |
-|------|-------|---------------|
-| **apt-get update** | Called separately in LibreOffice and font install steps. Each call is ~5-10s. | Consolidate into one `apt-get update` before installing any packages. |
-| **Pandoc download** | Downloaded from GitHub releases every run (~20MB). | Add `actions/cache` for the `.deb` file keyed by version, or pre-install in a custom runner. |
-| **FontConfig write** | `/etc/fonts/conf.d/99-calibri-carlito.conf` is rewritten every run. | Idempotent by design — negligible impact but could check before writing. |
-| **LibreOffice profile** | Fresh temp profile per run avoids lock contention. | Correct as-is; no change needed. |
-| **font install** | `ttf-mscorefonts-installer` (~30MB) installs every run. | Cache the apt packages using `actions/cache` for `apt-get install` artifacts. |
-| **Python processing** | `fix-docx-tables.py` reads/writes the entire DOCX zip in memory. | Fine for typical docs (<10MB). For very large documents with embedded media, stream process. |
-
-Most of these are inherent to running a composite action on a fresh runner.
-The largest real-world gains come from **caching Pandoc and font packages**
-and **consolidating apt operations**.
 
 ## Usage
 
@@ -70,15 +53,16 @@ Provide either `docx_file` or `markdown_file` (not both).
 Pre-built sample PDFs are attached to each
 [release](https://github.com/bryanpaget/markdown-to-pdf/releases). They are
 generated from [`samples/complex-document.md`](samples/complex-document.md) —
-a document exercising tables, lists, code blocks, blockquotes, and extensive
-formatting. Both the Markdown→PDF and DOCX→PDF paths are included.
+a document with tables, code blocks, lists, blockquotes, embedded financial
+charts, and extensive formatting. Both the Markdown→PDF and DOCX→PDF
+paths are included.
 
 To generate them locally:
 
 ```bash
-pandoc samples/complex-document.md -o samples/complex-document.docx
-python3 fix-docx-tables.py samples/complex-document.docx
-soffice --headless --convert-to pdf samples/complex-document.docx
+pandoc samples/complex-document.md --resource-path=samples -o complex-document.docx
+python3 fix-docx-tables.py complex-document.docx
+soffice --headless --convert-to pdf complex-document.docx
 ```
 
 ## Requirements

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>markdown-to-pdf · GitHub Action</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
@@ -15,8 +16,6 @@
       --text:      #e6edf3;
       --muted:     #8b949e;
       --accent:    #58a6ff;
-      --green:     #3fb950;
-      --orange:    #d29922;
       --radius:    8px;
       --max-w:     920px;
     }
@@ -221,8 +220,8 @@
   <div class="container">
     <h1><span>markdown</span>-to-pdf</h1>
     <p>
-      A GitHub composite action that converts Markdown or Word documents to PDF
-      using Pandoc and LibreOffice — preserving layout, fonts, and template styling.
+      A GitHub Action that converts Markdown or Word documents to PDF —
+      preserving layout, fonts, and template styling.
     </p>
     <div class="hero-buttons">
       <a class="btn btn-primary" href="https://github.com/bryanpaget/markdown-to-pdf">
@@ -251,7 +250,7 @@
       <div class="feature">
         <div class="feature-icon" style="background:#1f6feb22;color:#58a6ff;">&#8594;</div>
         <h3>Markdown → PDF</h3>
-        <p>Feed it a <code>.md</code> file; it handles Pandoc conversion and PDF rendering automatically.</p>
+        <p>Feed it a <code>.md</code> file; it converts to Word then PDF automatically.</p>
       </div>
       <div class="feature">
         <div class="feature-icon" style="background:#3fb95022;color:#3fb950;">W</div>
@@ -261,12 +260,12 @@
       <div class="feature">
         <div class="feature-icon" style="background:#d2992222;color:#d29922;">&equiv;</div>
         <h3>Table auto-fix</h3>
-        <p>Rewrites fixed-column-width tables to percentage-based widths and adds visible borders.</p>
+        <p>Tables automatically resize to fit the page with clean, visible borders.</p>
       </div>
       <div class="feature">
         <div class="feature-icon" style="background:#db6d2822;color:#db6d28;">F</div>
         <h3>Font substitution</h3>
-        <p>Installs Carlito as a metric-compatible Calibri substitute, plus Microsoft core fonts.</p>
+        <p>Fonts render correctly — including Calibri replacement and Microsoft core fonts.</p>
       </div>
       <div class="feature">
         <div class="feature-icon" style="background:#8957e522;color:#a371f7;">#</div>
@@ -276,7 +275,7 @@
       <div class="feature">
         <div class="feature-icon" style="background:#f0883e22;color:#f0883e;">+</div>
         <h3>Zero-config setup</h3>
-        <p>Pandoc, LibreOffice, and fonts are auto-installed on the runner. Just point and run.</p>
+        <p>Everything is auto-installed — no setup required. Just point it at your file and run.</p>
       </div>
     </div>
   </div>
@@ -286,10 +285,11 @@
   <div class="container">
     <h2>Sample outputs</h2>
     <p>
-      Every push to <code>main</code> publishes a
-      <a href="https://github.com/bryanpaget/markdown-to-pdf/releases">GitHub Release</a>
-      with pre-built artifacts from the <a href="https://github.com/bryanpaget/markdown-to-pdf/blob/main/samples/complex-document.md">sample document</a>
-      — a rich Markdown file exercising tables, code blocks, lists, and embedded financial charts.
+      Pre-built PDFs are available for download on the
+      <a href="https://github.com/bryanpaget/markdown-to-pdf/releases">releases page</a>,
+      generated from the
+      <a href="https://github.com/bryanpaget/markdown-to-pdf/blob/main/samples/complex-document.md">sample document</a>
+      — a real-world example with tables, code blocks, charts, and extensive formatting.
     </p>
 
     <table class="sample-table">
