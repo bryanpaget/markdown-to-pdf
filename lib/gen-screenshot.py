@@ -14,10 +14,10 @@ fmt = ImageFormatter(style="github-dark", line_numbers=True,
     line_number_pad=4, line_number_bg="#161b22")
 code_img = Image.open(io.BytesIO(highlight(md_section, MarkdownLexer(), fmt)))
 
-pdf_data = subprocess.check_output(
+subprocess.run(
     ["pdftoppm", "-png", "-f", "2", "-l", "2", "-r", "130",
-     "samples/complex-document-from-docx.pdf", "-"])
-pdf_img = Image.open(io.BytesIO(pdf_data))
+     "samples/complex-document-from-docx.pdf", "/tmp/pdfpage"], check=True)
+pdf_img = Image.open("/tmp/pdfpage-2.png")
 
 target_h = min(code_img.height, 1200)
 code_w = int(code_img.width * target_h / code_img.height)
