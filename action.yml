@@ -127,8 +127,12 @@ runs:
           sudo apt-get update
           echo "msttcorefonts/accepted-mscorefonts-eula boolean true" | sudo debconf-set-selections
           sudo apt-get install -y ttf-mscorefonts-installer
-          sudo fc-cache -f >/dev/null 2>&1 || true
-        fi
+        sudo fc-cache -f >/dev/null 2>&1 || true
+      fi
+      # Inconsolata — monospace font for code blocks (opt-in with font: "arial").
+      if ! fc-list 2>/dev/null | grep -qi 'Inconsolata'; then
+        sudo apt-get install -y fonts-inconsolata
+      fi
         # Carlito is the metric-compatible substitute for Calibri (not in free MS core-fonts).
         if ! fc-list 2>/dev/null | grep -qi 'Carlito'; then
           sudo apt-get install -y fonts-crosextra-carlito

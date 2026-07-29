@@ -390,7 +390,7 @@ def fix_section_page_breaks(doc_root: ET.Element) -> int:
 # ---------------------------------------------------------------------------
 
 def fix_font_arial(styles_root: ET.Element) -> int:
-    """Switch document default and every style to Arial; SourceCode stays monospace."""
+    """Switch doc default + every style to Arial; code styles stay monospace."""
     fixed = 0
 
     # Document default — catches text not covered by an explicit style.
@@ -410,6 +410,8 @@ def fix_font_arial(styles_root: ET.Element) -> int:
         rFonts.set(W + attr, "Arial")
     fixed += 1
 
+    MONO = {"SourceCode", "VerbatimChar"}
+
     for st in styles_root.iter(W + "style"):
         style_id = st.get(W + "styleId", "")
         rPr = st.find(W + "rPr")
@@ -419,10 +421,10 @@ def fix_font_arial(styles_root: ET.Element) -> int:
         if rFonts is None:
             rFonts = ET.SubElement(rPr, W + "rFonts")
 
-        if style_id == "SourceCode":
-            rFonts.set(W + "ascii", "Courier New")
-            rFonts.set(W + "hAnsi", "Courier New")
-            rFonts.set(W + "cs", "Courier New")
+        if style_id in MONO or style_id.endswith("Tok"):
+            rFonts.set(W + "ascii", "Inconsolata")
+            rFonts.set(W + "hAnsi", "Inconsolata")
+            rFonts.set(W + "cs", "Inconsolata")
             continue
 
         for attr in ("ascii", "hAnsi", "cs", "eastAsia"):
