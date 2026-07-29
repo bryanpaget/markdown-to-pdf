@@ -17,8 +17,8 @@ jobs:
 
       - name: Install Pandoc
         run: |
-          wget -q https://github.com/jgm/pandoc/releases/download/3.10.1/pandoc-3.10.1-1-amd64.deb
-          sudo dpkg -i pandoc-3.10.1-1-amd64.deb
+          sudo apt-get update
+          sudo apt-get install -y pandoc
 
       - name: Create sample DOCX
         run: |
